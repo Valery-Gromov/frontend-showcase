@@ -1,0 +1,17 @@
+{
+    "name": "@frontend-showcase/todo-app",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "echo dev",
+        "build": "echo build",
+        "preview": "echo preview",
+        "typecheck": "echo typecheck",
+        "lint": "echo lint"
+    },
+    "dependencies": {
+        "react": "^18.0.0",
+        "react-dom": "^18.0.0",
+        "@frontend-showcase/ui": "workspace:*"
+    }
+}
