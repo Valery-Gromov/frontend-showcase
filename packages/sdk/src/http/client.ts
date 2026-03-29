@@ -1,40 +1,10 @@
-interface HttpClientConfigType {
-  baseUrl: string;
-  timeout?: number;
-}
-
-type HttpMethod = 'GET' | 'POST' | 'DELETE';
-
-const httpMethods = {
-  get: 'GET',
-  post: 'POST',
-  delete: 'DELETE',
-} as const;
-
-type HttpClientErrorCodeType = 'HTTP_ERROR' | 'TIMEOUT_ERROR' | 'NETWORK_ERROR' | 'PARSE_ERROR';
-
-interface HttpClientErrorType {
-  status?: number;
-  method?: HttpMethod;
-  url?: string;
-  code?: HttpClientErrorCodeType;
-}
-
-class HttpClientError extends Error {
-  status?: number;
-  method?: HttpMethod;
-  url?: string;
-  code?: HttpClientErrorCodeType;
-
-  constructor(message: string, options?: HttpClientErrorType) {
-    super(message);
-    this.name = 'HttpClientError';
-    this.status = options?.status;
-    this.method = options?.method;
-    this.url = options?.url;
-    this.code = options?.code;
-  }
-}
+import { createTimedAbortController } from './helpers';
+import {
+  HttpClientError,
+  type HttpClientConfigType,
+  type HttpMethod,
+  httpMethods,
+} from './types';
 
 class HttpClient {
   private readonly baseUrl: string;
@@ -51,7 +21,7 @@ class HttpClient {
     headers?: HeadersInit,
     body?: unknown,
   ): Promise<T> {
-    const controller: AbortController = new AbortController();
+    const { controller, dispose } = createTimedAbortController(this.timeout);
     const url = `${this.baseUrl}${path}`;
 
     const config: RequestInit = {
@@ -66,10 +36,6 @@ class HttpClient {
     if (body !== undefined) {
       config.body = JSON.stringify(body);
     }
-
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-    }, this.timeout);
 
     try {
       const res = await fetch(url, config);
@@ -110,7 +76,7 @@ class HttpClient {
         code: 'NETWORK_ERROR',
       });
     } finally {
-      clearTimeout(timeoutId);
+      dispose();
     }
   }
 
@@ -130,3 +96,16 @@ class HttpClient {
     return this.request<T>(httpMethods.delete, path);
   }
 }
+
+function createHttpClient(config: HttpClientConfigType): HttpClient {
+  return new HttpClient(config);
+}
+
+export { createHttpClient, HttpClient };
+export { HttpClientError, httpMethods } from './types';
+export type {
+  HttpClientConfigType,
+  HttpClientErrorCodeType,
+  HttpClientErrorType,
+  HttpMethod,
+} from './types';
