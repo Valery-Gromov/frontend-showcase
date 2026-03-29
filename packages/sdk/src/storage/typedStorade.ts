@@ -1,0 +1,3 @@
+class TypedStorage {
+  data: string;
+}

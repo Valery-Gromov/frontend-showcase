@@ -1,0 +1,12 @@
+{
+    "name": "@frontend-showcase/sdk",
+    "version": "0.1.0",
+    "description": "SDK for the Frontend Showcase",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "echo build",
+        "typecheck": "echo typecheck",
+        "lint": "echo lint"
+    }
+}
