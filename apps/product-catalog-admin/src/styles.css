@@ -33,7 +33,9 @@ body {
 
 .header-meta {
   display: flex;
+  align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .selection-controls {
@@ -145,5 +147,103 @@ body {
 }
 
 .failure-list span {
+  color: #6b7280;
+}
+
+.drawer {
+  position: fixed;
+  inset: 0;
+  background: rgb(17 24 39 / 0.35);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 15;
+}
+
+.drawer-panel {
+  width: min(460px, 100%);
+  min-height: 100vh;
+  background: #ffffff;
+  border-left: 1px solid #e5e7eb;
+  box-shadow: -20px 0 40px rgb(17 24 39 / 0.18);
+  padding: 20px;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.drawer-header h2,
+.import-panel h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.drawer-header p,
+.import-panel p {
+  margin: 4px 0 0;
+  color: #6b7280;
+}
+
+.product-form {
+  display: grid;
+  gap: 12px;
+}
+
+.form-field {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.form-field > span {
+  font-size: 13px;
+}
+
+.form-error {
+  color: #dc2626;
+}
+
+.form-alert {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.form-success {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.drawer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.import-panel {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.file-input-row {
+  display: grid;
+  gap: 6px;
+}
+
+.file-input-row span {
   color: #6b7280;
 }

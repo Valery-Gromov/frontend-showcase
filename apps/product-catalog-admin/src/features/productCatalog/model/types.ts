@@ -14,6 +14,46 @@ export type Product = {
   disabledReason?: string;
 };
 
+export type ProductFormValue = {
+  name: string;
+  brand: string;
+  category: string;
+  sae: string;
+  status: ProductStatus;
+};
+
+export type ProductFormErrors = Partial<Record<keyof ProductFormValue, string>>;
+
+export type ProductMutationError = {
+  message: string;
+  fieldErrors?: ProductFormErrors;
+};
+
+export type ProductMutationState =
+  | { status: 'idle' }
+  | { status: 'saving' }
+  | { status: 'success'; message: string }
+  | { status: 'error'; error: ProductMutationError };
+
+export type ProductDrawerState =
+  | { mode: 'closed' }
+  | { mode: 'edit'; product: Product; initialValue: ProductFormValue }
+  | { mode: 'create'; initialValue: ProductFormValue };
+
+export type ProductMutationInput = ProductFormValue;
+
+export type ExcelImportState =
+  | { status: 'closed' }
+  | { status: 'idle'; file: File | null }
+  | { status: 'uploading'; file: File }
+  | { status: 'success'; message: string }
+  | { status: 'error'; file: File | null; message: string };
+
+export type ExcelImportResult = {
+  message: string;
+  updatedCount: number;
+};
+
 export type ProductQuery = {
   search: string;
   brand: string[];

@@ -9,13 +9,33 @@ import {
   type SelectionState,
   type SortState,
 } from '@frontend-showcase/ui';
-import { executeBulkAction, fetchProducts, getFilterOptions, simulateExternalCatalogChange } from '../api/mockProductCatalogApi';
+import {
+  createProduct,
+  executeBulkAction,
+  fetchProducts,
+  getFilterOptions,
+  simulateExternalCatalogChange,
+  updateProduct,
+  uploadProductExcel,
+} from '../api/mockProductCatalogApi';
 import { BulkFailureDetails } from '../components/BulkFailureDetails';
+import { DiscardChangesConfirmDialog } from '../components/DiscardChangesConfirmDialog';
+import { ExcelImportPanel } from '../components/ExcelImportPanel';
 import { OutdatedDataNotice } from '../components/OutdatedDataNotice';
 import { ProductCatalogHeader } from '../components/ProductCatalogHeader';
+import { ProductEditorDrawer } from '../components/ProductEditorDrawer';
 import { ProductCatalogPagination } from '../components/ProductCatalogPagination';
 import { QueryChangeConfirmDialog } from '../components/QueryChangeConfirmDialog';
 import { getBulkResultState } from '../model/bulkResults';
+import {
+  DEFAULT_PRODUCT_FORM_VALUE,
+  hasProductFormErrors,
+  isProductFormDirty,
+  normalizeProductFormValue,
+  productToFormValue,
+  validateProductForm,
+} from '../model/productForm';
+import { getExcelFileError } from '../model/productMutations';
 import {
   areProductQueriesEqual,
   getDefaultFilterDraft,
@@ -26,7 +46,20 @@ import {
 } from '../model/queryState';
 import { getSelectedCount, isSelectionActive } from '../model/selection';
 import { getProductTableColumns } from '../model/tableColumns';
-import type { BulkActionPayload, BulkActionState, BulkFailure, PendingQueryChange, Product, ProductQuery, TableLoadState } from '../model/types';
+import type {
+  BulkActionPayload,
+  BulkActionState,
+  BulkFailure,
+  ExcelImportState,
+  PendingQueryChange,
+  Product,
+  ProductDrawerState,
+  ProductFormErrors,
+  ProductFormValue,
+  ProductMutationState,
+  ProductQuery,
+  TableLoadState,
+} from '../model/types';
 
 type DataTableLoadState = 'idle' | 'loading' | 'refreshing' | 'error' | 'success';
 
@@ -81,6 +114,12 @@ export function ProductCatalogContainer() {
   const [toast, setToast] = useState<ToastState>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState('');
   const [outdatedNoticeVisible, setOutdatedNoticeVisible] = useState(false);
+  const [productDrawerState, setProductDrawerState] = useState<ProductDrawerState>({ mode: 'closed' });
+  const [productFormDraft, setProductFormDraft] = useState<ProductFormValue>(DEFAULT_PRODUCT_FORM_VALUE);
+  const [productFormErrors, setProductFormErrors] = useState<ProductFormErrors>({});
+  const [productMutationState, setProductMutationState] = useState<ProductMutationState>({ status: 'idle' });
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const [excelImportState, setExcelImportState] = useState<ExcelImportState>({ status: 'closed' });
 
   const requestSeqRef = useRef(0);
   const hasLoadedRef = useRef(false);
@@ -90,6 +129,10 @@ export function ProductCatalogContainer() {
   const options = useMemo(() => getFilterOptions(), []);
   const columns = useMemo(() => getProductTableColumns(), []);
   const pageRowIds = useMemo(() => rows.filter((row) => !row.disabled).map((row) => row.id), [rows]);
+  const productFormInitialValue =
+    productDrawerState.mode === 'closed' ? DEFAULT_PRODUCT_FORM_VALUE : productDrawerState.initialValue;
+  const productFormDirty =
+    productDrawerState.mode !== 'closed' && isProductFormDirty(productFormDraft, productFormInitialValue);
   const tableSelection = useMemo<SelectionState>(() => {
     if (selection.mode !== 'allMatching') return selection;
 
@@ -248,6 +291,112 @@ export function ProductCatalogContainer() {
     requestQueryChange({ ...appliedQueryRef.current, page }, 'pagination');
   };
 
+  const closeProductDrawer = () => {
+    setProductDrawerState({ mode: 'closed' });
+    setProductFormDraft(DEFAULT_PRODUCT_FORM_VALUE);
+    setProductFormErrors({});
+    setProductMutationState({ status: 'idle' });
+    setDiscardConfirmOpen(false);
+  };
+
+  const requestCloseProductDrawer = () => {
+    if (productFormDirty) {
+      setDiscardConfirmOpen(true);
+      return;
+    }
+
+    closeProductDrawer();
+  };
+
+  const openEditProductDrawer = (product: Product) => {
+    const initialValue = productToFormValue(product);
+    setProductDrawerState({ mode: 'edit', product, initialValue });
+    setProductFormDraft(initialValue);
+    setProductFormErrors({});
+    setProductMutationState({ status: 'idle' });
+    setDiscardConfirmOpen(false);
+  };
+
+  const openCreateProductDrawer = () => {
+    setProductDrawerState({ mode: 'create', initialValue: DEFAULT_PRODUCT_FORM_VALUE });
+    setProductFormDraft(DEFAULT_PRODUCT_FORM_VALUE);
+    setProductFormErrors({});
+    setProductMutationState({ status: 'idle' });
+    setDiscardConfirmOpen(false);
+  };
+
+  const submitProductForm = async () => {
+    if (productDrawerState.mode === 'closed') return;
+
+    const normalized = normalizeProductFormValue(productFormDraft);
+    const validationErrors = validateProductForm(normalized);
+    setProductFormErrors(validationErrors);
+
+    if (hasProductFormErrors(validationErrors)) {
+      return;
+    }
+
+    setProductMutationState({ status: 'saving' });
+
+    try {
+      if (productDrawerState.mode === 'edit') {
+        await updateProduct(productDrawerState.product.id, normalized);
+        setToast({ message: 'Product was updated.' });
+      } else {
+        await createProduct(normalized);
+        setToast({ message: 'Product was created.' });
+      }
+
+      closeProductDrawer();
+      await refreshCurrentTable();
+    } catch (error) {
+      setProductMutationState({
+        status: 'error',
+        error: {
+          message: error instanceof Error ? error.message : 'Product could not be saved.',
+        },
+      });
+    }
+  };
+
+  const openExcelImportPanel = () => {
+    setExcelImportState({ status: 'idle', file: null });
+  };
+
+  const closeExcelImportPanel = () => {
+    setExcelImportState({ status: 'closed' });
+  };
+
+  const setExcelImportFile = (file: File | null) => {
+    setExcelImportState({ status: 'idle', file });
+  };
+
+  const uploadExcelFile = async () => {
+    const file =
+      excelImportState.status === 'idle' || excelImportState.status === 'error' ? excelImportState.file : null;
+    const fileError = getExcelFileError(file);
+
+    if (fileError || !file) {
+      setExcelImportState({ status: 'error', file, message: fileError ?? 'Choose an Excel file first.' });
+      return;
+    }
+
+    setExcelImportState({ status: 'uploading', file });
+
+    try {
+      const result = await uploadProductExcel(file);
+      setExcelImportState({ status: 'success', message: result.message });
+      setToast({ message: result.message });
+      await refreshCurrentTable();
+    } catch (error) {
+      setExcelImportState({
+        status: 'error',
+        file,
+        message: error instanceof Error ? error.message : 'Excel upload failed.',
+      });
+    }
+  };
+
   const runBulkAction = async (actionId: string) => {
     if (!isSelectionActive(selection)) return;
 
@@ -285,12 +434,24 @@ export function ProductCatalogContainer() {
   return (
     <div className="page">
       <div className="container">
-        <ProductCatalogHeader loadState={tableLoadState} lastUpdatedAt={lastUpdatedAt} />
+        <ProductCatalogHeader
+          loadState={tableLoadState}
+          lastUpdatedAt={lastUpdatedAt}
+          onAddProduct={openCreateProductDrawer}
+          onOpenImport={openExcelImportPanel}
+        />
 
         <OutdatedDataNotice
           visible={outdatedNoticeVisible}
           refreshing={tableLoadState.status === 'refreshLoading'}
           onRefresh={() => void refreshCurrentTable()}
+        />
+
+        <ExcelImportPanel
+          state={excelImportState}
+          onFileChange={setExcelImportFile}
+          onUpload={() => void uploadExcelFile()}
+          onCancel={closeExcelImportPanel}
         />
 
         <FilterBar
@@ -356,14 +517,14 @@ export function ProductCatalogContainer() {
           getRowMeta={(row) => ({ id: row.id, disabled: row.disabled, disabledReason: row.disabledReason })}
           sort={appliedQuery.sort}
           onSortChange={handleSortChange}
-          selection={selection}
+          selection={tableSelection}
           onSelectionChange={setSelection}
           loadState={dataTableLoadState}
           errorDescription={getErrorMessage(tableLoadState)}
           onRetry={() => void refreshCurrentTable()}
           emptyDescription="Try changing filters or clearing search."
           renderRowActions={(row) => (
-            <Button variant="ghost" onClick={() => setToast({ message: `Open edit drawer for product ${row.id}` })}>
+            <Button variant="ghost" onClick={() => openEditProductDrawer(row)}>
               Edit
             </Button>
           )}
@@ -381,6 +542,35 @@ export function ProductCatalogContainer() {
           open={pendingQueryChange !== null}
           onCancel={handleConfirmCancel}
           onContinue={handleConfirmContinue}
+        />
+
+        <ProductEditorDrawer
+          open={productDrawerState.mode !== 'closed'}
+          mode={productDrawerState.mode === 'edit' ? 'edit' : 'create'}
+          value={productFormDraft}
+          errors={
+            productMutationState.status === 'error'
+              ? { ...productFormErrors, ...productMutationState.error.fieldErrors }
+              : productFormErrors
+          }
+          options={options}
+          dirty={productFormDirty}
+          mutationState={productMutationState}
+          onChange={(next) => {
+            setProductFormDraft(next);
+            setProductFormErrors({});
+            if (productMutationState.status === 'error') {
+              setProductMutationState({ status: 'idle' });
+            }
+          }}
+          onSubmit={() => void submitProductForm()}
+          onCancel={requestCloseProductDrawer}
+        />
+
+        <DiscardChangesConfirmDialog
+          open={discardConfirmOpen}
+          onCancel={() => setDiscardConfirmOpen(false)}
+          onDiscard={closeProductDrawer}
         />
       </div>
     </div>

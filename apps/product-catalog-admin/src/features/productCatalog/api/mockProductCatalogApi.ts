@@ -1,8 +1,10 @@
 import type {
   BulkActionPayload,
   BulkActionResult,
+  ExcelImportResult,
   FetchProductsResult,
   Product,
+  ProductMutationInput,
   ProductQuery,
   ProductStatus,
   Selection,
@@ -165,4 +167,66 @@ export async function executeBulkAction(
   }
 
   return { success, failed };
+}
+
+export async function updateProduct(id: string, input: ProductMutationInput): Promise<Product> {
+  await delay(randomInt(450, 1000));
+
+  const product = productsDb.find((item) => item.id === id);
+  if (!product) {
+    throw new Error('Product was deleted or no longer exists.');
+  }
+
+  if (product.disabled || Math.random() < 0.1) {
+    throw new Error('Product changed outside the UI. Refresh the table and try again.');
+  }
+
+  const updated: Product = {
+    ...product,
+    ...input,
+    updatedAt: new Date().toISOString(),
+  };
+
+  productsDb = productsDb.map((item) => (item.id === id ? updated : item));
+  return updated;
+}
+
+export async function createProduct(input: ProductMutationInput): Promise<Product> {
+  await delay(randomInt(450, 1000));
+
+  if (Math.random() < 0.08) {
+    throw new Error('Product could not be created because catalog validation failed.');
+  }
+
+  const nextId = String(Math.max(0, ...productsDb.map((product) => Number(product.id))) + 1);
+  const product: Product = {
+    id: nextId,
+    ...input,
+    updatedAt: new Date().toISOString(),
+  };
+
+  productsDb = [product, ...productsDb];
+  return product;
+}
+
+export async function uploadProductExcel(file: File): Promise<ExcelImportResult> {
+  await delay(randomInt(800, 1400));
+
+  if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
+    throw new Error('Upload an Excel file with .xlsx or .xls extension.');
+  }
+
+  if (Math.random() < 0.12) {
+    throw new Error('Backend import rejected the file. Check the template and try again.');
+  }
+
+  const updatedCount = randomInt(3, 18);
+  for (let index = 0; index < updatedCount; index += 1) {
+    simulateExternalCatalogChange();
+  }
+
+  return {
+    updatedCount,
+    message: `Excel import accepted. ${updatedCount} products were updated.`,
+  };
 }
