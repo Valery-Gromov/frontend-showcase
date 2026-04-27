@@ -15,14 +15,12 @@ export function RowCheckboxCell({
   onChange,
 }: RowCheckboxCellProps) {
   const checkbox = (
-    <span style={{ display: 'inline-flex' }}>
-      <Checkbox checked={checked} disabled={disabled} onCheckedChange={onChange} />
-    </span>
+    <Checkbox checked={checked} disabled={disabled} onCheckedChange={onChange} />
   );
 
-  if (!disabled || !disabledReason) {
-    return checkbox;
+  if (disabled && disabledReason) {
+    return <Tooltip content={disabledReason}>{checkbox}</Tooltip>;
   }
 
-  return <Tooltip content={disabledReason}>{checkbox}</Tooltip>;
+  return checkbox;
 }

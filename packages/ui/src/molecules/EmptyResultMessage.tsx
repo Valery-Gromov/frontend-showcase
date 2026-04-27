@@ -24,13 +24,13 @@ export function EmptyResultMessage({
         justifyItems: 'start',
       }}
     >
-      <span aria-hidden style={{ fontSize: 18 }}>
-        o
+      <span aria-hidden style={{ fontSize: 20 }}>
+        🔍
       </span>
       <strong>{title}</strong>
       {description ? <span style={{ color: '#6b7280' }}>{description}</span> : null}
-      {actionLabel ? (
-        <Button variant="secondary" onClick={onAction} disabled={!onAction}>
+      {actionLabel && onAction ? (
+        <Button variant="secondary" onClick={onAction}>
           {actionLabel}
         </Button>
       ) : null}

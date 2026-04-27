@@ -19,43 +19,29 @@ export function FilterSelect({
   error,
   onChange,
 }: FilterSelectProps) {
-  const hasError = Boolean(error);
-
-  if (multiple) {
-    const multiValue = Array.isArray(value) ? value : [];
-    return (
-      <div style={{ display: 'grid', gap: 6 }}>
-        <label style={{ fontSize: 12, fontWeight: 600 }}>{label}</label>
-        <Select
-          multiple
-          value={multiValue}
-          options={options}
-          loading={loading}
-          error={hasError}
-          onValueChange={(next) => onChange(next)}
-          onClearAll={() => onChange([])}
-        />
-        {error ? <small style={{ color: '#dc2626' }}>{error}</small> : null}
-      </div>
-    );
-  }
-
-  const singleValue = typeof value === 'string' ? value : '';
-  const preparedOptions = [{ label: 'All', value: '' }, ...options];
-
   return (
     <div style={{ display: 'grid', gap: 6 }}>
-      <label style={{ fontSize: 12, fontWeight: 600 }}>{label}</label>
-      <Select
-        value={singleValue}
-        options={preparedOptions}
-        loading={loading}
-        error={hasError}
-        onValueChange={(next) => onChange(next === '' ? null : next)}
-      />
+      <label style={{ fontSize: 13, fontWeight: 600 }}>{label}</label>
+      {multiple ? (
+        <Select
+          multiple
+          options={options}
+          value={Array.isArray(value) ? value : []}
+          loading={loading}
+          error={Boolean(error)}
+          onValueChange={(next) => onChange(next.length ? next : null)}
+          onClearAll={() => onChange(null)}
+        />
+      ) : (
+        <Select
+          options={options}
+          value={typeof value === 'string' ? value : ''}
+          loading={loading}
+          error={Boolean(error)}
+          onValueChange={(next) => onChange(next || null)}
+        />
+      )}
       {error ? <small style={{ color: '#dc2626' }}>{error}</small> : null}
     </div>
   );
 }
-
-export type { SelectOption };

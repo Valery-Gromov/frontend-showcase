@@ -24,37 +24,27 @@ export function TableHeaderCell({
   onSort,
 }: TableHeaderCellProps) {
   const content = (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      <span>{label}</span>
-      {sortable ? (
-        <span aria-hidden style={{ fontSize: 12 }}>
-          {getSortIcon(sortDirection)}
-        </span>
-      ) : null}
-    </span>
-  );
-
-  const control = sortable ? (
     <button
       type="button"
-      onClick={onSort}
+      onClick={sortable ? onSort : undefined}
+      disabled={!sortable}
       style={{
         border: 'none',
         background: 'transparent',
         padding: 0,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        cursor: sortable ? 'pointer' : 'default',
         fontWeight: 600,
-        cursor: 'pointer',
       }}
     >
-      {content}
+      <span>{label}</span>
+      {sortable ? <span aria-hidden>{getSortIcon(sortDirection)}</span> : null}
     </button>
-  ) : (
-    <span style={{ fontWeight: 600 }}>{content}</span>
   );
 
-  if (!tooltip) {
-    return control;
-  }
+  if (!tooltip) return content;
 
-  return <Tooltip content={tooltip}>{control}</Tooltip>;
+  return <Tooltip content={tooltip}>{content}</Tooltip>;
 }

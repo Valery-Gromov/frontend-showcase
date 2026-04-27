@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { IconButton } from '../atoms/IconButton';
 import { TextInput } from '../atoms/TextInput';
 
@@ -19,54 +19,49 @@ export function SearchField({
   onChange,
   onClear,
 }: SearchFieldProps) {
-  const [innerValue, setInnerValue] = useState(value);
+  const [draftValue, setDraftValue] = useState(value);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    setInnerValue(value);
+    setDraftValue(value);
   }, [value]);
 
   useEffect(() => {
-    if (!debounceMs || debounceMs <= 0) {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
       return;
     }
-    const timeoutId = setTimeout(() => {
-      onChange(innerValue);
-    }, debounceMs);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [debounceMs, innerValue, onChange]);
-
-  const handleValueChange = (next: string) => {
-    setInnerValue(next);
     if (!debounceMs || debounceMs <= 0) {
-      onChange(next);
-    }
-  };
-
-  const handleClear = () => {
-    setInnerValue('');
-    if (onClear) {
-      onClear();
+      onChange(draftValue);
       return;
     }
-    onChange('');
-  };
+    const timeoutId = setTimeout(() => onChange(draftValue), debounceMs);
+    return () => clearTimeout(timeoutId);
+  }, [debounceMs, draftValue, onChange]);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
       <TextInput
-        value={innerValue}
-        onValueChange={handleValueChange}
+        value={draftValue}
+        onValueChange={setDraftValue}
         placeholder={placeholder}
         pending={loading}
+        clearable
+        onClear={() => {
+          if (onClear) onClear();
+          setDraftValue('');
+          onChange('');
+        }}
       />
       <IconButton
         icon="x"
         label="Clear search"
-        onClick={handleClear}
-        disabled={!innerValue || loading}
+        onClick={() => {
+          if (onClear) onClear();
+          setDraftValue('');
+          onChange('');
+        }}
+        disabled={!draftValue}
       />
     </div>
   );

@@ -9,9 +9,11 @@ export type ActiveFilterChipProps = {
 
 export function ActiveFilterChip({ label, valueLabel, onRemove }: ActiveFilterChipProps) {
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      <Chip compact>{`${label}: ${valueLabel}`}</Chip>
-      <IconButton icon="x" label={`Remove ${label} filter`} onClick={onRemove} />
-    </div>
+    <Chip>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <span>{`${label}: ${valueLabel}`}</span>
+        <IconButton icon="x" label={`Remove ${label} filter`} onClick={onRemove} />
+      </span>
+    </Chip>
   );
 }

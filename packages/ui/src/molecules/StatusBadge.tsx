@@ -6,18 +6,16 @@ export type StatusBadgeProps = {
   tooltip?: string;
 };
 
-const statusToVariant: Record<StatusBadgeProps['status'], BadgeVariant> = {
+const variantByStatus: Record<StatusBadgeProps['status'], BadgeVariant> = {
   active: 'success',
   draft: 'warning',
   archived: 'neutral',
 };
 
 export function StatusBadge({ status, tooltip }: StatusBadgeProps) {
-  const badge = <Badge variant={statusToVariant[status]}>{status}</Badge>;
+  const badge = <Badge variant={variantByStatus[status]}>{status}</Badge>;
 
-  if (!tooltip) {
-    return badge;
-  }
+  if (!tooltip) return badge;
 
   return <Tooltip content={tooltip}>{badge}</Tooltip>;
 }
