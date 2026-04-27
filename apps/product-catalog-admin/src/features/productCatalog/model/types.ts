@@ -14,7 +14,7 @@ export type Product = {
   disabledReason?: string;
 };
 
-export type QueryState = {
+export type ProductQuery = {
   search: string;
   brand: string[];
   category: string[];
@@ -25,23 +25,48 @@ export type QueryState = {
   sort: SortState;
 };
 
+export type PendingQueryChange = {
+  nextQuery: ProductQuery;
+  source: 'apply' | 'reset' | 'sort' | 'pagination' | 'popstate';
+} | null;
+
+export type TableLoadState =
+  | { status: 'idle' }
+  | { status: 'initialLoading' }
+  | { status: 'queryLoading' }
+  | { status: 'refreshLoading' }
+  | { status: 'success' }
+  | { status: 'empty' }
+  | { status: 'error'; message: string };
+
 export type FetchProductsResult = {
   items: Product[];
   total: number | null;
   requestId: string;
-  querySnapshot: QueryState;
+  querySnapshot: ProductQuery;
 };
-
-export type BulkActionType = 'changeStatus' | 'delete' | 'changeCategory';
 
 export type BulkActionPayload =
   | { type: 'changeStatus'; status: ProductStatus }
   | { type: 'delete' }
   | { type: 'changeCategory'; category: string };
 
+export type BulkFailure = {
+  id: string;
+  reason: string;
+  name?: string;
+};
+
 export type BulkActionResult = {
   success: string[];
-  failed: Array<{ id: string; reason: string }>;
+  failed: BulkFailure[];
 };
+
+export type BulkActionState =
+  | { status: 'idle' }
+  | { status: 'submitting'; actionId: string }
+  | { status: 'success'; message: string }
+  | { status: 'partialSuccess'; message: string; failed: BulkFailure[] }
+  | { status: 'failure'; message: string };
 
 export type Selection = SelectionState;

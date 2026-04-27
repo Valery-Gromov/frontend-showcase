@@ -3,18 +3,26 @@ import type {
   BulkActionResult,
   FetchProductsResult,
   Product,
+  ProductQuery,
   ProductStatus,
-  QueryState,
   Selection,
-} from './types';
+} from '../model/types';
 
-const BRANDS = ['Shell', 'Castrol', 'Mobil', 'Total', 'Liqui Moly'];
-const CATEGORIES = ['Engine Oil', 'Transmission Oil', 'Coolant', 'Brake Fluid'];
-const SAE = ['0W-20', '5W-30', '5W-40', '10W-40'];
-const STATUSES: ProductStatus[] = ['active', 'draft', 'archived'];
+const BRANDS = ['Shell', 'Castrol', 'Mobil', 'Total', 'Liqui Moly'] as const;
+const CATEGORIES = ['Engine Oil', 'Transmission Oil', 'Coolant', 'Brake Fluid'] as const;
+const SAE = ['0W-20', '5W-30', '5W-40', '10W-40'] as const;
+const STATUSES = ['active', 'draft', 'archived'] as const satisfies readonly ProductStatus[];
 
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randomFrom<T>(items: readonly T[]): T {
+  const item = items[randomInt(0, items.length - 1)];
+  if (item === undefined) {
+    throw new Error('Cannot pick from an empty list');
+  }
+  return item;
 }
 
 function delay(ms: number): Promise<void> {
@@ -22,10 +30,10 @@ function delay(ms: number): Promise<void> {
 }
 
 function makeProduct(index: number): Product {
-  const brand = BRANDS[index % BRANDS.length];
-  const category = CATEGORIES[index % CATEGORIES.length];
-  const sae = SAE[index % SAE.length];
-  const status = STATUSES[index % STATUSES.length];
+  const brand = BRANDS[index % BRANDS.length] ?? BRANDS[0];
+  const category = CATEGORIES[index % CATEGORIES.length] ?? CATEGORIES[0];
+  const sae = SAE[index % SAE.length] ?? SAE[0];
+  const status = STATUSES[index % STATUSES.length] ?? STATUSES[0];
   const disabled = index % 17 === 0;
 
   return {
@@ -41,9 +49,9 @@ function makeProduct(index: number): Product {
   };
 }
 
-let PRODUCTS_DB: Product[] = Array.from({ length: 130 }, (_, i) => makeProduct(i));
+let productsDb: Product[] = Array.from({ length: 130 }, (_, index) => makeProduct(index));
 
-function matchesQuery(item: Product, query: QueryState): boolean {
+function matchesQuery(item: Product, query: ProductQuery): boolean {
   const text = query.search.trim().toLowerCase();
   if (text && !item.name.toLowerCase().includes(text)) return false;
   if (query.brand.length > 0 && !query.brand.includes(item.brand)) return false;
@@ -53,28 +61,28 @@ function matchesQuery(item: Product, query: QueryState): boolean {
   return true;
 }
 
-function sortItems(items: Product[], query: QueryState): Product[] {
+function sortItems(items: Product[], query: ProductQuery): Product[] {
   if (!query.sort) return items;
   const { field, direction } = query.sort;
   const sign = direction === 'asc' ? 1 : -1;
+
   return [...items].sort((a, b) => {
-    const va = String((a as unknown as Record<string, unknown>)[field] ?? '');
-    const vb = String((b as unknown as Record<string, unknown>)[field] ?? '');
-    return va.localeCompare(vb) * sign;
+    const left = String((a as unknown as Record<string, unknown>)[field] ?? '');
+    const right = String((b as unknown as Record<string, unknown>)[field] ?? '');
+    return left.localeCompare(right) * sign;
   });
 }
 
-function maybeMutateExternally(): void {
-  if (Math.random() < 0.35) {
-    const idx = randomInt(0, PRODUCTS_DB.length - 1);
-    const current = PRODUCTS_DB[idx];
-    if (!current) return;
-    PRODUCTS_DB[idx] = {
-      ...current,
-      status: STATUSES[randomInt(0, STATUSES.length - 1)],
-      updatedAt: new Date().toISOString(),
-    };
-  }
+export function simulateExternalCatalogChange(): void {
+  const index = randomInt(0, productsDb.length - 1);
+  const current = productsDb[index];
+  if (!current) return;
+
+  productsDb[index] = {
+    ...current,
+    status: randomFrom(STATUSES),
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 export function getFilterOptions() {
@@ -86,15 +94,14 @@ export function getFilterOptions() {
   };
 }
 
-export async function fetchProducts(query: QueryState): Promise<FetchProductsResult> {
-  maybeMutateExternally();
+export async function fetchProducts(query: ProductQuery): Promise<FetchProductsResult> {
   const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
   // Simulate slow API and out-of-order responses.
   const latency = randomInt(500, 1200) + (Math.random() < 0.2 ? 450 : 0);
   await delay(latency);
 
-  const filtered = PRODUCTS_DB.filter((item) => matchesQuery(item, query));
+  const filtered = productsDb.filter((item) => matchesQuery(item, query));
   const sorted = sortItems(filtered, query);
   const offset = (query.page - 1) * query.pageSize;
   const items = sorted.slice(offset, offset + query.pageSize);
@@ -111,9 +118,8 @@ function resolveSelectionIds(selection: Selection): string[] {
   if (selection.mode === 'none') return [];
   if (selection.mode === 'some') return selection.ids;
 
-  // allMatching: apply query snapshot against current DB and exclude IDs.
-  const snapshot = selection.querySnapshot as QueryState;
-  const ids = PRODUCTS_DB.filter((p) => matchesQuery(p, snapshot)).map((p) => p.id);
+  const snapshot = selection.querySnapshot as ProductQuery;
+  const ids = productsDb.filter((product) => matchesQuery(product, snapshot)).map((product) => product.id);
   const excluded = new Set(selection.excludedIds);
   return ids.filter((id) => !excluded.has(id));
 }
@@ -125,23 +131,28 @@ export async function executeBulkAction(
   await delay(randomInt(450, 1100));
 
   const selectedIds = resolveSelectionIds(selection);
-  const failed: Array<{ id: string; reason: string }> = [];
+  const failed: BulkActionResult['failed'] = [];
   const success: string[] = [];
 
   for (const id of selectedIds) {
-    const row = PRODUCTS_DB.find((p) => p.id === id);
+    const row = productsDb.find((product) => product.id === id);
     if (!row) {
       failed.push({ id, reason: 'already deleted' });
       continue;
     }
     if (row.disabled || Math.random() < 0.12) {
-      failed.push({ id, reason: row.disabled ? 'permission denied' : 'conflict with another update' });
+      failed.push({
+        id,
+        name: row.name,
+        reason: row.disabled ? 'permission denied' : 'conflict with another update',
+      });
       continue;
     }
+
     success.push(id);
 
     if (payload.type === 'delete') {
-      PRODUCTS_DB = PRODUCTS_DB.filter((p) => p.id !== id);
+      productsDb = productsDb.filter((product) => product.id !== id);
       continue;
     }
     if (payload.type === 'changeStatus') {

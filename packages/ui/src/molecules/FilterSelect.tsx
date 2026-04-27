@@ -20,7 +20,7 @@ export function FilterSelect({
   onChange,
 }: FilterSelectProps) {
   return (
-    <div style={{ display: 'grid', gap: 6 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <label style={{ fontSize: 13, fontWeight: 600 }}>{label}</label>
       {multiple ? (
         <Select
