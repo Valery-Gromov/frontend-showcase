@@ -16,3 +16,6 @@ export * from './molecules/RowCheckboxCell';
 export * from './molecules/StatusBadge';
 export * from './molecules/BulkSelectionSummary';
 export * from './molecules/EmptyResultMessage';
+export * from './organisms/DataTable';
+export * from './organisms/FilterBar';
+export * from './organisms/BulkActionBar';
