@@ -165,7 +165,7 @@ export function App() {
             </div>
           </div>
 
-          <div className="row">
+          <div className="row row-center">
             <Checkbox
               checked={allVisibleSelected}
               indeterminate={!allVisibleSelected && someVisibleSelected}
