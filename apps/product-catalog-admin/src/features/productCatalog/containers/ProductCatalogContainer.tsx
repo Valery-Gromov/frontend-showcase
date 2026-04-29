@@ -69,8 +69,6 @@ type ToastState = {
 } | null;
 
 const BULK_ACTIONS: BulkActionItem[] = [
-  { id: 'status-active', label: 'Set Active', variant: 'secondary' },
-  { id: 'change-category', label: 'Set Category: Coolant', variant: 'secondary' },
   { id: 'delete', label: 'Delete', variant: 'danger' },
 ];
 
@@ -100,9 +98,30 @@ function getBulkPayload(actionId: string): BulkActionPayload {
   return { type: 'delete' };
 }
 
+function getActiveFilterCount(query: ProductQuery): number {
+  return [
+    query.search.trim(),
+    query.brand.length,
+    query.category.length,
+    query.sae.length,
+    query.status,
+  ].filter(Boolean).length;
+}
+
+function isFilterDraftDirty(draft: FilterBarQuery, query: ProductQuery): boolean {
+  return (
+    draft.search !== query.search ||
+    draft.status !== query.status ||
+    draft.brand.join(',') !== query.brand.join(',') ||
+    draft.category.join(',') !== query.category.join(',') ||
+    draft.sae.join(',') !== query.sae.join(',')
+  );
+}
+
 export function ProductCatalogContainer() {
   const [appliedQuery, setAppliedQuery] = useState<ProductQuery>(() => readProductQueryFromUrl(window.location.search));
   const [filterDraft, setFilterDraft] = useState<FilterBarQuery>(() => toFilterDraft(appliedQuery));
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [pendingQueryChange, setPendingQueryChange] = useState<PendingQueryChange>(null);
   const [rows, setRows] = useState<Product[]>([]);
   const [total, setTotal] = useState<number | null>(null);
@@ -114,6 +133,7 @@ export function ProductCatalogContainer() {
   const [toast, setToast] = useState<ToastState>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState('');
   const [outdatedNoticeVisible, setOutdatedNoticeVisible] = useState(false);
+  const [bulkActionsOpen, setBulkActionsOpen] = useState(false);
   const [productDrawerState, setProductDrawerState] = useState<ProductDrawerState>({ mode: 'closed' });
   const [productFormDraft, setProductFormDraft] = useState<ProductFormValue>(DEFAULT_PRODUCT_FORM_VALUE);
   const [productFormErrors, setProductFormErrors] = useState<ProductFormErrors>({});
@@ -276,11 +296,13 @@ export function ProductCatalogContainer() {
 
   const handleApplyFilters = (nextDraft: FilterBarQuery) => {
     requestQueryChange(queryFromFilterDraft(nextDraft, appliedQueryRef.current), 'apply');
+    setFiltersOpen(false);
   };
 
   const handleResetFilters = () => {
     const nextDraft = getDefaultFilterDraft();
     requestQueryChange(queryFromFilterDraft(nextDraft, appliedQueryRef.current), 'reset');
+    setFiltersOpen(false);
   };
 
   const handleSortChange = (nextSort: SortState) => {
@@ -400,6 +422,7 @@ export function ProductCatalogContainer() {
   const runBulkAction = async (actionId: string) => {
     if (!isSelectionActive(selection)) return;
 
+    setBulkActionsOpen(false);
     setBulkActionState({ status: 'submitting', actionId });
     setToast(null);
 
@@ -430,6 +453,12 @@ export function ProductCatalogContainer() {
   const selectedCount = getSelectedCount(selection, total);
   const dataTableLoadState = toDataTableLoadState(tableLoadState);
   const tableBusy = isTableBusy(tableLoadState);
+  const bulkActionsDisabled = !isSelectionActive(selection) || bulkActionState.status === 'submitting';
+  const bulkActionsLoading =
+    bulkActionState.status === 'submitting' &&
+    (bulkActionState.actionId === 'status-active' || bulkActionState.actionId === 'change-category');
+  const activeFilterCount = getActiveFilterCount(appliedQuery);
+  const filterDraftDirty = isFilterDraftDirty(filterDraft, appliedQuery);
 
   return (
     <div className="page">
@@ -454,34 +483,6 @@ export function ProductCatalogContainer() {
           onCancel={closeExcelImportPanel}
         />
 
-        <FilterBar
-          mode="manual"
-          value={filterDraft}
-          options={options}
-          loading={tableBusy}
-          pendingApply={tableLoadState.status === 'queryLoading' || tableLoadState.status === 'initialLoading'}
-          onChange={setFilterDraft}
-          onApply={handleApplyFilters}
-          onReset={handleResetFilters}
-        />
-
-        <div className="selection-controls">
-          <Button
-            variant="ghost"
-            onClick={() =>
-              setSelection({
-                mode: 'allMatching',
-                excludedIds: [],
-                querySnapshot: appliedQuery,
-              })
-            }
-            disabled={rows.length === 0}
-          >
-            Select all matching filters
-          </Button>
-          <span className="hint">When enabled, current and future pages are selected except manually excluded rows.</span>
-        </div>
-
         <BulkActionBar
           selection={tableSelection}
           selectedCount={selectedCount}
@@ -489,8 +490,68 @@ export function ProductCatalogContainer() {
           loadingActionId={bulkActionState.status === 'submitting' ? bulkActionState.actionId : null}
           onClearSelection={() => setSelection({ mode: 'none' })}
           onAction={(actionId) => void runBulkAction(actionId)}
+          toolbarActions={
+            <>
+              <Button
+                variant={filtersOpen ? 'primary' : 'secondary'}
+                onClick={() => setFiltersOpen((open) => !open)}
+                aria-expanded={filtersOpen}
+                aria-controls="product-catalog-filters"
+              >
+                {activeFilterCount > 0 ? `Filters · ${activeFilterCount}` : 'Filters'}
+              </Button>
+              {filterDraftDirty ? <span className="hint">Unsaved filters</span> : null}
+              <div className="bulk-actions-menu-wrap">
+                <Button
+                  variant="secondary"
+                  onClick={() => setBulkActionsOpen((open) => !open)}
+                  disabled={bulkActionsDisabled}
+                  loading={bulkActionsLoading}
+                  aria-expanded={bulkActionsOpen}
+                  aria-controls="bulk-actions-menu"
+                >
+                  Bulk actions
+                </Button>
+                {bulkActionsOpen ? (
+                  <div id="bulk-actions-menu" className="bulk-actions-menu" role="menu">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      disabled={bulkActionsDisabled}
+                      onClick={() => void runBulkAction('status-active')}
+                    >
+                      Set active
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      disabled={bulkActionsDisabled}
+                      onClick={() => void runBulkAction('change-category')}
+                    >
+                      Change category to Coolant
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </>
+          }
           actions={BULK_ACTIONS}
         />
+
+        {filtersOpen ? (
+          <div id="product-catalog-filters" className="filter-panel">
+            <FilterBar
+              mode="manual"
+              value={filterDraft}
+              options={options}
+              loading={tableBusy}
+              pendingApply={tableLoadState.status === 'queryLoading' || tableLoadState.status === 'initialLoading'}
+              onChange={setFilterDraft}
+              onApply={handleApplyFilters}
+              onReset={handleResetFilters}
+            />
+          </div>
+        ) : null}
 
         {toast ? (
           <div className="toast" role="status">

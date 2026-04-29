@@ -2,6 +2,7 @@ import { Button } from '../atoms/Button';
 import { Tooltip } from '../atoms/Tooltip';
 import { BulkSelectionSummary } from '../molecules/BulkSelectionSummary';
 import { type SelectionState } from './DataTable';
+import type { ReactNode } from 'react';
 
 export type BulkActionItem = {
   id: string;
@@ -16,6 +17,7 @@ export type BulkActionBarProps = {
   selectedCount: number;
   totalKnown?: number | null;
   actions: BulkActionItem[];
+  toolbarActions?: ReactNode;
   loadingActionId?: string | null;
   disabled?: boolean;
   onAction: (actionId: string) => void;
@@ -33,6 +35,7 @@ export function BulkActionBar({
   selectedCount,
   totalKnown,
   actions,
+  toolbarActions,
   loadingActionId = null,
   disabled = false,
   onAction,
@@ -61,6 +64,7 @@ export function BulkActionBar({
         onClear={onClearSelection}
       />
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {toolbarActions}
         {actions.map((action) => {
           const isDisabled = barDisabled || Boolean(action.disabled);
           const button = (
