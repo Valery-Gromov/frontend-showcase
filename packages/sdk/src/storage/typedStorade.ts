@@ -28,7 +28,7 @@ class TypedStorage {
   }
 
   /**
-   * Читает значение, сохранённое через JSON. Если ключа нет — `null`.
+   * Reads a JSON-serialized value. Returns `null` when the key is missing.
    */
   get<T>(key: string): T | null {
     const storage = this.getStorage();
@@ -48,7 +48,7 @@ class TypedStorage {
   }
 
   /**
-   * Сохраняет значение как JSON.
+   * Stores a value as JSON.
    */
   set<T>(key: string, value: T): void {
     const storage = this.getStorage();
@@ -79,7 +79,7 @@ class TypedStorage {
   }
 
   /**
-   * Строка без JSON — удобно для простых токенов и совместимости со старыми значениями.
+   * Plain-string accessor; useful for simple tokens and for compatibility with legacy values.
    */
   getRaw(key: string): string | null {
     const storage = this.getStorage();
@@ -116,7 +116,8 @@ class TypedStorage {
   }
 
   /**
-   * Удаляет все ключи, начинающиеся с `prefix`. Без префикса в конфиге — ошибка, чтобы не очистить весь `localStorage` случайно.
+   * Removes every key that starts with `prefix`. Throws when the prefix is empty so that the
+   * entire `localStorage` cannot be wiped by accident.
    */
   clearNamespace(): void {
     if (this.prefix === '') {

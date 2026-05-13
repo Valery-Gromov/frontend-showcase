@@ -1,7 +1,7 @@
 export interface TypedStorageConfigType {
-  /** Префикс для всех ключей (например `app:`), чтобы не пересекаться с другими данными в storage. */
+  /** Prefix for every key (e.g. `app:`) so the namespace does not collide with other storage entries. */
   prefix?: string;
-  /** Подмена storage (тесты, sessionStorage и т.д.). По умолчанию `localStorage`. */
+  /** Replacement storage for tests, `sessionStorage`, etc. Defaults to `localStorage`. */
   storage?: Storage;
 }
 

@@ -1,85 +1,82 @@
-Шаг 1: Проблема
+# `httpClient` design notes
 
-- Единый способ делать HTTP-запросы
-- Единый формат обработки ошибок
-- Единый timeout / retry
-- Убрать повторяющийся код: fetch + try/catch + JSON.parse
+Working notes from the original design exercise. The actual implementation lives in
+[`client.ts`](client.ts), [`types.ts`](types.ts), and [`helpers.ts`](helpers.ts).
 
-Шаг 2: Границы
+## Step 1: Problem
 
-httpClient:
-✔ делает HTTP-запрос
-✔ обрабатывает ошибки
-✔ парсит JSON
-✔ поддерживает timeout
-✔ может делать retry
+- One uniform way to make HTTP requests.
+- One uniform error shape.
+- One uniform timeout / retry policy.
+- Eliminate boilerplate: `fetch` + `try/catch` + `JSON.parse`.
 
-httpClient не должен:
-❌ знать про React
-❌ знать про UI
-❌ знать про конкретный API (/todos, /users)
-❌ содержать бизнес-логику
-❌ делать caching
+## Step 2: Boundaries
 
-Шаг 3: API
+`httpClient` MUST:
 
-httpClient создаётся через createHttpClient(config), который принимает базовую конфигурацию клиента.
+- Perform the HTTP request.
+- Normalize errors.
+- Parse JSON.
+- Honor a timeout.
+- Optionally retry idempotent calls.
 
-После создания клиент предоставляет методы:
+`httpClient` MUST NOT:
 
-- httpClient.get(path, options)
-- httpClient.post(path, data, options)
-- httpClient.delete(path, options)
+- Know about React.
+- Know about UI.
+- Know about a specific API surface (`/todos`, `/users`).
+- Contain business logic.
+- Cache responses.
 
-Конфигурация клиента может включать:
+## Step 3: API
 
-- baseUrl
-- timeout
-- default headers
+Clients are built with `createHttpClient(config)`. The resulting client exposes:
 
-Шаг 3.5: Пример использования
+- `httpClient.get(path, headers?)`
+- `httpClient.post(path, body, headers?)`
+- `httpClient.put(path, body, headers?)`
+- `httpClient.patch(path, body, headers?)`
+- `httpClient.delete(path, headers?)`
 
+Configuration accepts:
+
+- `baseUrl`
+- `timeout`
+- `fetch` (injectable)
+- `retry` (idempotent methods only)
+- `defaultHeaders`
+
+### Example
+
+```ts
 const httpClient = createHttpClient({
-baseUrl: "/api",
-timeout: 5000,
-})
+  baseUrl: '/api',
+  timeout: 5000,
+});
 
-const todos = await httpClient.get("/todos")
+const todos = await httpClient.get('/todos');
+await httpClient.post('/todos', { title: 'Learn monorepo' });
+```
 
-await httpClient.post("/todos", {
-title: "Learn monorepo",
-})
+## Step 4: Edge cases
 
-Шаг 4: Edge cases
+- **Network errors**: DNS failure, offline, connection reset.
+- **Timeout**: hung server, slow network.
+- **HTTP errors**: 4xx, 5xx (5xx in the retry window can be retried for idempotent calls).
+- **Parsing errors**: malformed JSON.
 
-Network errors
+## Step 5: Return shape and error behavior
 
-- DNS fail
-- offline
-- connection reset
+- On success the client returns the parsed JSON response.
+- On timeout, network failure, HTTP error, or parse error the client throws a normalized
+  `HttpClientError` that carries `code`, `status`, `method`, `url`, and a best-effort
+  `responseBody`.
 
-Timeout
+## Step 6: File layout
 
-- сервер завис
-- slow network
-
-HTTP errors
-
-- 4xx
-- 5xx
-
-Parsing errors
-
-- JSON parse error
-
-Шаг 4.5: Что возвращает клиент / поведение при ошибке
-
-- По умолчанию клиент возвращает распарсенный JSON-ответ
-- Если произошёл timeout, network error, HTTP error или ошибка парсинга — клиент выбрасывает нормализованную ошибку
-
-Шаг 5: Структура
-
-httpClient
-    client
-    types
-    helpers
+```
+http/
+  client.ts    main class + factory
+  types.ts     interfaces, error codes, error class
+  helpers.ts   AbortController helper, idempotency check, header merge, delay
+```
