@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useExternalChangeDetector, useRequestSequence } from '@frontend-showcase/hooks';
 import {
   BulkActionBar,
   Button,
@@ -13,6 +14,7 @@ import {
   createProduct,
   executeBulkAction,
   fetchProducts,
+  getCatalogVersion,
   getFilterOptions,
   simulateExternalCatalogChange,
   updateProduct,
@@ -36,6 +38,7 @@ import {
   validateProductForm,
 } from '../model/productForm';
 import { getExcelFileError } from '../model/productMutations';
+import { readCatalogPreferences, writeCatalogPreferences } from '../model/preferences';
 import {
   areProductQueriesEqual,
   getDefaultFilterDraft,
@@ -121,7 +124,7 @@ function isFilterDraftDirty(draft: FilterBarQuery, query: ProductQuery): boolean
 export function ProductCatalogContainer() {
   const [appliedQuery, setAppliedQuery] = useState<ProductQuery>(() => readProductQueryFromUrl(window.location.search));
   const [filterDraft, setFilterDraft] = useState<FilterBarQuery>(() => toFilterDraft(appliedQuery));
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(() => readCatalogPreferences().filtersOpen);
   const [pendingQueryChange, setPendingQueryChange] = useState<PendingQueryChange>(null);
   const [rows, setRows] = useState<Product[]>([]);
   const [total, setTotal] = useState<number | null>(null);
@@ -132,7 +135,6 @@ export function ProductCatalogContainer() {
   const [failureDetailsOpen, setFailureDetailsOpen] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState('');
-  const [outdatedNoticeVisible, setOutdatedNoticeVisible] = useState(false);
   const [bulkActionsOpen, setBulkActionsOpen] = useState(false);
   const [productDrawerState, setProductDrawerState] = useState<ProductDrawerState>({ mode: 'closed' });
   const [productFormDraft, setProductFormDraft] = useState<ProductFormValue>(DEFAULT_PRODUCT_FORM_VALUE);
@@ -141,7 +143,11 @@ export function ProductCatalogContainer() {
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
   const [excelImportState, setExcelImportState] = useState<ExcelImportState>({ status: 'closed' });
 
-  const requestSeqRef = useRef(0);
+  const requestSequence = useRequestSequence();
+  const { isOutdated: outdatedNoticeVisible, markFresh: markCatalogFresh } = useExternalChangeDetector({
+    intervalMs: 4000,
+    probe: getCatalogVersion,
+  });
   const hasLoadedRef = useRef(false);
   const appliedQueryRef = useRef(appliedQuery);
   const selectionRef = useRef(selection);
@@ -173,24 +179,23 @@ export function ProductCatalogContainer() {
 
   useEffect(() => {
     const fetchAppliedQuery = async () => {
-      requestSeqRef.current += 1;
-      const seq = requestSeqRef.current;
+      const token = requestSequence.next();
       setRows([]);
       setTotal(null);
       setTableLoadState({ status: hasLoadedRef.current ? 'queryLoading' : 'initialLoading' });
 
       try {
         const result = await fetchProducts(appliedQuery);
-        if (seq !== requestSeqRef.current) return;
+        if (!token.isLatest) return;
 
         setRows(result.items);
         setTotal(result.total);
         setLastUpdatedAt(new Date().toLocaleTimeString());
-        setOutdatedNoticeVisible(false);
+        markCatalogFresh();
         setTableLoadState({ status: result.items.length > 0 ? 'success' : 'empty' });
         hasLoadedRef.current = true;
       } catch (error) {
-        if (seq !== requestSeqRef.current) return;
+        if (!token.isLatest) return;
 
         setRows([]);
         setTotal(null);
@@ -200,16 +205,19 @@ export function ProductCatalogContainer() {
     };
 
     void fetchAppliedQuery();
-  }, [appliedQuery]);
+  }, [appliedQuery, markCatalogFresh, requestSequence]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
       simulateExternalCatalogChange();
-      setOutdatedNoticeVisible(true);
     }, 12000);
 
     return () => window.clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    writeCatalogPreferences({ filtersOpen });
+  }, [filtersOpen]);
 
   const commitQueryChange = (nextQuery: ProductQuery, source: NonNullable<PendingQueryChange>['source']) => {
     if (areProductQueriesEqual(appliedQueryRef.current, nextQuery)) {
@@ -257,22 +265,21 @@ export function ProductCatalogContainer() {
   }, []);
 
   const refreshCurrentTable = async () => {
-    requestSeqRef.current += 1;
-    const seq = requestSeqRef.current;
+    const token = requestSequence.next();
     setTableLoadState({ status: 'refreshLoading' });
 
     try {
       const result = await fetchProducts(appliedQueryRef.current);
-      if (seq !== requestSeqRef.current) return;
+      if (!token.isLatest) return;
 
       setRows(result.items);
       setTotal(result.total);
       setLastUpdatedAt(new Date().toLocaleTimeString());
-      setOutdatedNoticeVisible(false);
+      markCatalogFresh();
       setTableLoadState({ status: result.items.length > 0 ? 'success' : 'empty' });
       hasLoadedRef.current = true;
     } catch (error) {
-      if (seq !== requestSeqRef.current) return;
+      if (!token.isLatest) return;
 
       setToast({ message: error instanceof Error ? error.message : 'Refresh failed.' });
       setTableLoadState({ status: rows.length > 0 ? 'success' : 'empty' });

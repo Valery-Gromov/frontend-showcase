@@ -1,3 +1,5 @@
+import { createHttpClient, HttpClientError } from '@frontend-showcase/sdk';
+import { createMockFetch } from '@frontend-showcase/mock-network';
 import type {
   BulkActionPayload,
   BulkActionResult,
@@ -6,227 +8,105 @@ import type {
   Product,
   ProductMutationInput,
   ProductQuery,
-  ProductStatus,
   Selection,
 } from '../model/types';
+import {
+  createCatalogMockRoutes,
+  getCatalogVersion,
+  getFilterOptions,
+  simulateExternalCatalogChange,
+} from './mockServer';
 
-const BRANDS = ['Shell', 'Castrol', 'Mobil', 'Total', 'Liqui Moly'] as const;
-const CATEGORIES = ['Engine Oil', 'Transmission Oil', 'Coolant', 'Brake Fluid'] as const;
-const SAE = ['0W-20', '5W-30', '5W-40', '10W-40'] as const;
-const STATUSES = ['active', 'draft', 'archived'] as const satisfies readonly ProductStatus[];
+const httpClient = createHttpClient({
+  baseUrl: '/api',
+  timeout: 5000,
+  fetch: createMockFetch(createCatalogMockRoutes(), {
+    latency: { min: 500, max: 1200 },
+  }),
+  retry: {
+    maxRetries: 1,
+    initialDelayMs: 200,
+    retryableStatuses: [502, 503, 504],
+  },
+});
 
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function productQueryToSearch(query: ProductQuery): string {
+  const params = new URLSearchParams();
+  if (query.search) params.set('search', query.search);
+  if (query.brand.length) params.set('brand', query.brand.join(','));
+  if (query.category.length) params.set('category', query.category.join(','));
+  if (query.sae.length) params.set('sae', query.sae.join(','));
+  if (query.status) params.set('status', query.status);
+  params.set('page', String(query.page));
+  params.set('pageSize', String(query.pageSize));
+  if (query.sort) params.set('sort', `${query.sort.field}:${query.sort.direction}`);
+  const tail = params.toString();
+  return tail ? `?${tail}` : '';
 }
 
-function randomFrom<T>(items: readonly T[]): T {
-  const item = items[randomInt(0, items.length - 1)];
-  if (item === undefined) {
-    throw new Error('Cannot pick from an empty list');
+/**
+ * Translates a transport-level HttpClientError into a domain Error with a human message.
+ * The catalog UI reads `error.message` directly, so we surface the server's `message` field
+ * (attached to `error.responseBody`) when present, and fall back to the SDK wrapper text or
+ * a generic message otherwise.
+ */
+function unwrapDomainError(error: unknown, fallbackMessage: string): never {
+  if (error instanceof HttpClientError) {
+    const body = error.responseBody;
+    if (body && typeof body === 'object' && 'message' in body) {
+      const message = (body as { message?: unknown }).message;
+      if (typeof message === 'string' && message.length > 0) {
+        throw new Error(message);
+      }
+    }
+    if (error.code === 'TIMEOUT_ERROR') throw new Error('Request timed out. Try again.');
+    if (error.code === 'NETWORK_ERROR') throw new Error('Network unavailable. Check connection.');
+    throw new Error(fallbackMessage);
   }
-  return item;
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function makeProduct(index: number): Product {
-  const brand = BRANDS[index % BRANDS.length] ?? BRANDS[0];
-  const category = CATEGORIES[index % CATEGORIES.length] ?? CATEGORIES[0];
-  const sae = SAE[index % SAE.length] ?? SAE[0];
-  const status = STATUSES[index % STATUSES.length] ?? STATUSES[0];
-  const disabled = index % 17 === 0;
-
-  return {
-    id: String(index + 1),
-    name: `${brand} ${sae} ${category} #${index + 1}`,
-    brand,
-    category,
-    sae,
-    status,
-    updatedAt: new Date(Date.now() - index * 3600_000).toISOString(),
-    disabled,
-    disabledReason: disabled ? 'Locked by external process' : undefined,
-  };
-}
-
-let productsDb: Product[] = Array.from({ length: 130 }, (_, index) => makeProduct(index));
-
-function matchesQuery(item: Product, query: ProductQuery): boolean {
-  const text = query.search.trim().toLowerCase();
-  if (text && !item.name.toLowerCase().includes(text)) return false;
-  if (query.brand.length > 0 && !query.brand.includes(item.brand)) return false;
-  if (query.category.length > 0 && !query.category.includes(item.category)) return false;
-  if (query.sae.length > 0 && !query.sae.includes(item.sae)) return false;
-  if (query.status && item.status !== query.status) return false;
-  return true;
-}
-
-function sortItems(items: Product[], query: ProductQuery): Product[] {
-  if (!query.sort) return items;
-  const { field, direction } = query.sort;
-  const sign = direction === 'asc' ? 1 : -1;
-
-  return [...items].sort((a, b) => {
-    const left = String((a as unknown as Record<string, unknown>)[field] ?? '');
-    const right = String((b as unknown as Record<string, unknown>)[field] ?? '');
-    return left.localeCompare(right) * sign;
-  });
-}
-
-export function simulateExternalCatalogChange(): void {
-  const index = randomInt(0, productsDb.length - 1);
-  const current = productsDb[index];
-  if (!current) return;
-
-  productsDb[index] = {
-    ...current,
-    status: randomFrom(STATUSES),
-    updatedAt: new Date().toISOString(),
-  };
-}
-
-export function getFilterOptions() {
-  return {
-    brand: BRANDS.map((value) => ({ value, label: value })),
-    category: CATEGORIES.map((value) => ({ value, label: value })),
-    sae: SAE.map((value) => ({ value, label: value })),
-    status: STATUSES.map((value) => ({ value, label: value })),
-  };
+  throw error instanceof Error ? error : new Error(fallbackMessage);
 }
 
 export async function fetchProducts(query: ProductQuery): Promise<FetchProductsResult> {
-  const requestId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-  // Simulate slow API and out-of-order responses.
-  const latency = randomInt(500, 1200) + (Math.random() < 0.2 ? 450 : 0);
-  await delay(latency);
-
-  const filtered = productsDb.filter((item) => matchesQuery(item, query));
-  const sorted = sortItems(filtered, query);
-  const offset = (query.page - 1) * query.pageSize;
-  const items = sorted.slice(offset, offset + query.pageSize);
-
-  return {
-    items,
-    total: null,
-    requestId,
-    querySnapshot: query,
-  };
+  try {
+    return await httpClient.get<FetchProductsResult>(`/products${productQueryToSearch(query)}`);
+  } catch (error) {
+    unwrapDomainError(error, 'Failed to fetch products.');
+  }
 }
 
-function resolveSelectionIds(selection: Selection): string[] {
-  if (selection.mode === 'none') return [];
-  if (selection.mode === 'some') return selection.ids;
+export async function createProduct(input: ProductMutationInput): Promise<Product> {
+  try {
+    return await httpClient.post<Product>('/products', input);
+  } catch (error) {
+    unwrapDomainError(error, 'Product could not be created.');
+  }
+}
 
-  const snapshot = selection.querySnapshot as ProductQuery;
-  const ids = productsDb.filter((product) => matchesQuery(product, snapshot)).map((product) => product.id);
-  const excluded = new Set(selection.excludedIds);
-  return ids.filter((id) => !excluded.has(id));
+export async function updateProduct(id: string, input: ProductMutationInput): Promise<Product> {
+  try {
+    return await httpClient.put<Product>(`/products/${encodeURIComponent(id)}`, input);
+  } catch (error) {
+    unwrapDomainError(error, 'Product could not be saved.');
+  }
 }
 
 export async function executeBulkAction(
   selection: Selection,
   payload: BulkActionPayload,
 ): Promise<BulkActionResult> {
-  await delay(randomInt(450, 1100));
-
-  const selectedIds = resolveSelectionIds(selection);
-  const failed: BulkActionResult['failed'] = [];
-  const success: string[] = [];
-
-  for (const id of selectedIds) {
-    const row = productsDb.find((product) => product.id === id);
-    if (!row) {
-      failed.push({ id, reason: 'already deleted' });
-      continue;
-    }
-    if (row.disabled || Math.random() < 0.12) {
-      failed.push({
-        id,
-        name: row.name,
-        reason: row.disabled ? 'permission denied' : 'conflict with another update',
-      });
-      continue;
-    }
-
-    success.push(id);
-
-    if (payload.type === 'delete') {
-      productsDb = productsDb.filter((product) => product.id !== id);
-      continue;
-    }
-    if (payload.type === 'changeStatus') {
-      row.status = payload.status;
-      row.updatedAt = new Date().toISOString();
-      continue;
-    }
-    row.category = payload.category;
-    row.updatedAt = new Date().toISOString();
+  try {
+    return await httpClient.post<BulkActionResult>('/products/bulk', { selection, payload });
+  } catch (error) {
+    unwrapDomainError(error, 'Bulk action failed.');
   }
-
-  return { success, failed };
-}
-
-export async function updateProduct(id: string, input: ProductMutationInput): Promise<Product> {
-  await delay(randomInt(450, 1000));
-
-  const product = productsDb.find((item) => item.id === id);
-  if (!product) {
-    throw new Error('Product was deleted or no longer exists.');
-  }
-
-  if (product.disabled || Math.random() < 0.1) {
-    throw new Error('Product changed outside the UI. Refresh the table and try again.');
-  }
-
-  const updated: Product = {
-    ...product,
-    ...input,
-    updatedAt: new Date().toISOString(),
-  };
-
-  productsDb = productsDb.map((item) => (item.id === id ? updated : item));
-  return updated;
-}
-
-export async function createProduct(input: ProductMutationInput): Promise<Product> {
-  await delay(randomInt(450, 1000));
-
-  if (Math.random() < 0.08) {
-    throw new Error('Product could not be created because catalog validation failed.');
-  }
-
-  const nextId = String(Math.max(0, ...productsDb.map((product) => Number(product.id))) + 1);
-  const product: Product = {
-    id: nextId,
-    ...input,
-    updatedAt: new Date().toISOString(),
-  };
-
-  productsDb = [product, ...productsDb];
-  return product;
 }
 
 export async function uploadProductExcel(file: File): Promise<ExcelImportResult> {
-  await delay(randomInt(800, 1400));
-
-  if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
-    throw new Error('Upload an Excel file with .xlsx or .xls extension.');
+  try {
+    return await httpClient.post<ExcelImportResult>('/products/import', { fileName: file.name });
+  } catch (error) {
+    unwrapDomainError(error, 'Excel upload failed.');
   }
-
-  if (Math.random() < 0.12) {
-    throw new Error('Backend import rejected the file. Check the template and try again.');
-  }
-
-  const updatedCount = randomInt(3, 18);
-  for (let index = 0; index < updatedCount; index += 1) {
-    simulateExternalCatalogChange();
-  }
-
-  return {
-    updatedCount,
-    message: `Excel import accepted. ${updatedCount} products were updated.`,
-  };
 }
+
+export { getCatalogVersion, getFilterOptions, simulateExternalCatalogChange };
