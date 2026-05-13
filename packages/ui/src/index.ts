@@ -11,7 +11,7 @@ export * from './atoms/Chip';
 export * from './molecules/SearchField';
 export * from './molecules/FilterSelect';
 export * from './molecules/ActiveFilterChip';
-export * from './molecules/TableHeaderCell';
+export { TableHeaderCell, type TableHeaderCellProps } from './molecules/TableHeaderCell';
 export * from './molecules/RowCheckboxCell';
 export * from './molecules/StatusBadge';
 export * from './molecules/BulkSelectionSummary';

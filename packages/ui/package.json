@@ -10,11 +10,15 @@
     },
     "scripts": {
         "build": "echo build",
-        "typecheck": "echo typecheck",
+        "typecheck": "tsc --noEmit -p tsconfig.json",
         "lint": "echo lint"
     },
     "peerDependencies": {
         "react": "^18.0.0",
         "react-dom": "^18.0.0"
+    },
+    "devDependencies": {
+        "@types/react": "^18.3.24",
+        "@types/react-dom": "^18.3.7"
     }
 }
