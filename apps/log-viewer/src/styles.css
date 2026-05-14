@@ -1,0 +1,10 @@
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--color-background);
+}
+
+#root {
+  min-height: 100vh;
+}
