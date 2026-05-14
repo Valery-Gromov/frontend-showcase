@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react';
+import styles from './Chip.module.css';
 
 export interface ChipProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
@@ -16,26 +17,16 @@ export function Chip({
   compact = false,
   disabled = false,
   onRemove,
-  style,
+  className,
   ...rest
 }: ChipProps) {
   return (
     <div
       {...rest}
       aria-disabled={disabled}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        borderRadius: 999,
-        border: `1px solid ${selected ? '#2563eb' : '#d1d5db'}`,
-        background: selected ? '#eff6ff' : '#fff',
-        color: disabled ? '#9ca3af' : '#111827',
-        padding: compact ? '2px 8px' : '4px 10px',
-        fontSize: compact ? 12 : 13,
-        opacity: disabled ? 0.6 : 1,
-        ...style,
-      }}
+      data-selected={selected}
+      data-compact={compact}
+      className={className ? `${styles.chip} ${className}` : styles.chip}
     >
       <span>{children}</span>
       {removable ? (
@@ -44,7 +35,7 @@ export function Chip({
           aria-label="Remove chip"
           disabled={disabled}
           onClick={onRemove}
-          style={{ border: 'none', background: 'transparent', cursor: disabled ? 'not-allowed' : 'pointer' }}
+          className={styles.removeButton}
         >
           x
         </button>

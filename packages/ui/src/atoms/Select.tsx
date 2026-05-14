@@ -1,5 +1,5 @@
-import type { CSSProperties } from 'react';
 import { Loader } from './Loader';
+import styles from './Select.module.css';
 
 export interface SelectOption {
   label: string;
@@ -30,25 +30,12 @@ interface MultiSelectProps extends SelectBaseProps {
 
 export type SelectProps = SingleSelectProps | MultiSelectProps;
 
-const baseStyle: CSSProperties = {
-  borderRadius: 8,
-  border: '1px solid #d1d5db',
-  minHeight: 36,
-  padding: '6px 8px',
-  width: '100%',
-};
-
 export function Select(props: SelectProps) {
   const { options, disabled = false, error = false, loading = false, emptyText = 'No options' } = props;
-  const style: CSSProperties = {
-    ...baseStyle,
-    borderColor: error ? '#dc2626' : '#d1d5db',
-    opacity: disabled ? 0.6 : 1,
-  };
 
   if (props.multiple) {
     return (
-      <div style={{ display: 'grid', gap: 8 }}>
+      <div className={styles.root}>
         <select
           multiple
           value={props.value}
@@ -57,7 +44,8 @@ export function Select(props: SelectProps) {
             const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
             props.onValueChange(selected);
           }}
-          style={{ ...style, minHeight: 100 }}
+          data-error={error}
+          className={`${styles.select} ${styles.multiSelect}`}
         >
           {options.length === 0 ? <option disabled>{emptyText}</option> : null}
           {options.map((option) => (
@@ -66,12 +54,13 @@ export function Select(props: SelectProps) {
             </option>
           ))}
         </select>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className={styles.multiFooter}>
           {loading ? <Loader size="sm" label="Loading options" /> : null}
           <button
             type="button"
             onClick={() => (props.onClearAll ? props.onClearAll() : props.onValueChange([]))}
             disabled={disabled || loading || props.value.length === 0}
+            className={styles.clearAllButton}
           >
             Clear all
           </button>
@@ -81,12 +70,13 @@ export function Select(props: SelectProps) {
   }
 
   return (
-    <div style={{ display: 'grid', gap: 8 }}>
+    <div className={styles.root}>
       <select
         value={props.value}
         disabled={disabled || loading}
         onChange={(e) => props.onValueChange(e.target.value)}
-        style={style}
+        data-error={error}
+        className={styles.select}
       >
         {options.length === 0 ? <option value="">{emptyText}</option> : null}
         {options.map((option) => (

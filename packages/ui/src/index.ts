@@ -1,3 +1,4 @@
+/// <reference path="./styles/css-modules.d.ts" />
 export * from './atoms/Button';
 export * from './atoms/Checkbox';
 export * from './atoms/TextInput';

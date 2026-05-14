@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { ChangeEvent, InputHTMLAttributes, ReactNode } from 'react';
+import styles from './TextInput.module.css';
 
 export interface TextInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'prefix'> {
   value: string;
@@ -24,7 +25,7 @@ export function TextInput({
   errorText,
   pending = false,
   disabled,
-  style,
+  className,
   ...rest
 }: TextInputProps) {
   const hint = useMemo(() => errorText ?? helperText, [errorText, helperText]);
@@ -40,39 +41,43 @@ export function TextInput({
     else onValueChange('');
   };
 
+  const fieldState = hasError ? 'error' : 'default';
+
   return (
-    <div style={{ display: 'grid', gap: 6 }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          borderRadius: 8,
-          border: `1px solid ${hasError ? '#dc2626' : '#d1d5db'}`,
-          padding: '0 10px',
-          height: 36,
-          opacity: disabled ? 0.6 : 1,
-          ...style,
-        }}
-      >
-        {prefix ? <span>{prefix}</span> : null}
+    <div className={className ? `${styles.root} ${className}` : styles.root}>
+      <div className={styles.field} data-state={fieldState} data-disabled={disabled}>
+        {prefix ? <span className={styles.adornment}>{prefix}</span> : null}
         <input
           {...rest}
           value={value}
           disabled={disabled}
           onChange={handleChange}
           aria-invalid={hasError || undefined}
-          style={{ border: 'none', outline: 'none', width: '100%', background: 'transparent' }}
+          className={styles.input}
         />
-        {pending ? <span aria-hidden>...</span> : null}
+        {pending ? (
+          <span className={styles.adornment} aria-hidden>
+            ...
+          </span>
+        ) : null}
         {clearable && value ? (
-          <button type="button" aria-label="Clear input" onClick={handleClear} disabled={disabled}>
+          <button
+            type="button"
+            aria-label="Clear input"
+            onClick={handleClear}
+            disabled={disabled}
+            className={styles.clearButton}
+          >
             x
           </button>
         ) : null}
-        {suffix ? <span>{suffix}</span> : null}
+        {suffix ? <span className={styles.adornment}>{suffix}</span> : null}
       </div>
-      {hint ? <small style={{ color: hasError ? '#dc2626' : '#6b7280' }}>{hint}</small> : null}
+      {hint ? (
+        <small className={styles.hint} data-state={fieldState}>
+          {hint}
+        </small>
+      ) : null}
     </div>
   );
 }

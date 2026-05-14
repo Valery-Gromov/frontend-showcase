@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Loader } from './Loader';
+import styles from './IconButton.module.css';
 
 export interface IconButtonProps
   extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'aria-label'> {
@@ -15,7 +16,7 @@ export function IconButton({
   loading = false,
   danger = false,
   disabled,
-  style,
+  className,
   ...rest
 }: IconButtonProps) {
   const isDisabled = disabled || loading;
@@ -26,20 +27,8 @@ export function IconButton({
       aria-label={label}
       disabled={isDisabled}
       aria-busy={loading || undefined}
-      style={{
-        width: 32,
-        height: 32,
-        borderRadius: 8,
-        border: `1px solid ${danger ? '#dc2626' : '#d1d5db'}`,
-        color: danger ? '#dc2626' : '#111827',
-        background: '#fff',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: isDisabled ? 'not-allowed' : 'pointer',
-        opacity: isDisabled ? 0.6 : 1,
-        ...style,
-      }}
+      data-danger={danger}
+      className={className ? `${styles.iconButton} ${className}` : styles.iconButton}
     >
       {loading ? <Loader size="xs" label="Icon button loading" /> : icon}
     </button>

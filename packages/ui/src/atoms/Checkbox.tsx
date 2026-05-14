@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import styles from './Checkbox.module.css';
 
 export interface CheckboxProps {
   checked: boolean;
@@ -28,9 +29,7 @@ export function Checkbox({
   }, [indeterminate]);
 
   return (
-    <label
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 8, cursor: disabled ? 'not-allowed' : 'pointer' }}
-    >
+    <label className={styles.label} data-disabled={disabled}>
       <input
         ref={ref}
         id={id}
@@ -40,6 +39,7 @@ export function Checkbox({
         disabled={disabled}
         aria-checked={indeterminate ? 'mixed' : checked}
         onChange={(e) => onCheckedChange(e.target.checked)}
+        className={styles.input}
       />
       {label ? <span>{label}</span> : null}
     </label>

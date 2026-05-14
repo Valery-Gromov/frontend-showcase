@@ -1,0 +1,53 @@
+.wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.trigger {
+  display: inline-flex;
+}
+
+.content {
+  position: absolute;
+  z-index: 20;
+  max-width: 260px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-caption);
+  color: var(--color-surface);
+  background: var(--color-on-surface);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast) var(--easing-standard);
+  white-space: normal;
+}
+
+.wrapper:hover .content,
+.wrapper:focus-within .content {
+  opacity: 1;
+  transition-delay: var(--tooltip-delay, 150ms);
+}
+
+.content[data-placement='top'] {
+  bottom: 100%;
+  left: 50%;
+  transform: translate(-50%, calc(var(--space-1) * -2));
+}
+
+.content[data-placement='right'] {
+  left: 100%;
+  top: 50%;
+  transform: translate(var(--space-2), -50%);
+}
+
+.content[data-placement='bottom'] {
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, var(--space-2));
+}
+
+.content[data-placement='left'] {
+  right: 100%;
+  top: 50%;
+  transform: translate(calc(var(--space-2) * -1), -50%);
+}

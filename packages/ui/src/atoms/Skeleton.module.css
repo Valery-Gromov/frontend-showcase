@@ -1,0 +1,47 @@
+.skeleton {
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-variant) 25%,
+    var(--color-outline-variant) 37%,
+    var(--color-surface-variant) 63%
+  );
+  background-size: 400% 100%;
+  animation: ui-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.skeleton[data-variant='text'] {
+  height: 14px;
+  width: 60%;
+}
+
+.skeleton[data-variant='rectangle'] {
+  height: 80px;
+  width: 100%;
+}
+
+.skeleton[data-variant='table-row'] {
+  height: 36px;
+  width: 100%;
+}
+
+.skeleton[data-variant='card'] {
+  height: 120px;
+  width: 240px;
+}
+
+@keyframes ui-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
