@@ -27,3 +27,4 @@ coverage/
 .cursor/*
 !.cursor/rules/
 !.cursor/rules/*.mdc
+.prompts
