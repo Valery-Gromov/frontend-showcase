@@ -1,0 +1,39 @@
+---
+alwaysApply: true
+---
+
+# Agent Handoff Rules
+
+Every non-trivial agent session must leave the next session with a clear handoff.
+
+## Required update
+
+If you changed code, docs, tests, CI, dependencies, screenshots, or repo structure, update:
+
+- `docs/agent-handoff.md`
+
+Keep it short and useful. The handoff is not a diary; it is an operational summary for the next
+agent.
+
+## What to record
+
+Add a new entry at the top of the "Recent Agent Entries" section with:
+
+- date
+- agent/task label
+- scope profile used: `app`, `package`, or `cross-cutting`
+- files or areas changed
+- verification commands run and their result
+- commits created, if any
+- open questions / next suggested step
+
+## When not to update
+
+Do not update the handoff for read-only answers, tiny terminal checks, or conversations that make no
+workspace changes.
+
+## Consistency rule
+
+If README, roadmap, architecture docs, screenshots, or CI behavior changed, the handoff must mention
+which docs were updated. If they should have been updated but were not, record that as an open
+question.

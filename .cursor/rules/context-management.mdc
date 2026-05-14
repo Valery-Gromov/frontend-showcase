@@ -1,0 +1,82 @@
+---
+alwaysApply: true
+---
+
+# Context Management Rules
+
+This repository is a portfolio monorepo. Context must be loaded deliberately so each agent keeps the
+project consistent without reading the entire repo on every task.
+
+## Always read first
+
+At the start of a new task, read these files before making changes:
+
+- `README.md`
+- `docs/roadmap.md`
+- `docs/architecture.md`
+- `docs/dependency-graph.md`
+- `docs/agent-handoff.md`
+
+If the task is explicitly tiny (for example, "show git status"), this can be skipped.
+
+## Scope profiles
+
+Choose one scope profile before editing.
+
+### App work: `apps/*`
+
+Use this when changing an app UI, feature, route, container, app README, or app behavior.
+
+Read:
+
+- target app `package.json`
+- target app `README.md` if it exists
+- target app entry files: `src/main.tsx`, `src/app/*`
+- relevant feature files only
+- shared package READMEs/contracts that the app consumes:
+  - `packages/ui/src/index.ts`
+  - `packages/sdk/src/index.ts`
+  - `packages/hooks/src/index.ts`
+  - `packages/mock-network/src/index.ts` when mock transport is involved
+
+Rule: app chats must keep shared package contracts in context. Apps consume `packages/*`; do not
+change package APIs from an app task without checking all affected consumers.
+
+### Package work: `packages/*`
+
+Use this when changing SDK, UI, hooks, mock-network, package README, or package tests.
+
+Read:
+
+- target package `package.json`
+- target package `README.md` if it exists
+- target package `src/index.ts`
+- target package tests and nearby implementation files
+
+Apps are not required context for package-only work unless:
+
+- changing a public export or public type
+- changing UI component props
+- changing SDK/hook behavior used by apps
+- debugging a consumer regression
+
+When any of those apply, inspect the affected app usages with `rg`.
+
+### Cross-cutting work
+
+Use this for docs, CI, workspace config, dependency graph, screenshots, or repo hygiene.
+
+Read:
+
+- root `package.json`
+- `pnpm-workspace.yaml`
+- `.github/workflows/ci.yml` when CI/test behavior is involved
+- relevant docs under `docs/`
+- `docs/agent-handoff.md`
+
+## Context budget
+
+- Prefer `rg` / `rg --files` to discover relevant files.
+- Do not read every file in `apps/` or `packages/` by default.
+- Summarize what you learned before broad edits.
+- If a change crosses ownership boundaries, state that explicitly in the handoff.

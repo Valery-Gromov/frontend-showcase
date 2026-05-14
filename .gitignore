@@ -24,4 +24,6 @@ coverage/
 # IDE / system
 .idea/
 .vscode/
-.cursor/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/*.mdc

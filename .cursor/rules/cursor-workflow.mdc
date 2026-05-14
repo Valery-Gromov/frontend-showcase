@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+---
+
+# Cursor Workflow Rules
+
+- Before coding, inspect relevant files.
+- Do not rewrite unrelated files.
+- Do not create large implementations in one step.
+- Prefer small, reviewable changes.
+- If the task is architectural, produce a plan first.
+- If requirements are unclear, ask before implementing.
+- After changes, summarize what changed and why.
+- Mention any assumptions explicitly.

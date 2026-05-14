@@ -1,0 +1,13 @@
+---
+alwaysApply: true
+---
+
+# Accessibility Rules
+
+- Interactive elements must be keyboard accessible.
+- Icon-only buttons must have accessible labels.
+- Form fields must have labels or aria-label.
+- Disabled actions should explain why when possible.
+- Tables must use semantic table structure unless there is a reason not to.
+- Loading and error states should be announced when appropriate.
+- Do not remove focus outlines without replacing them with visible focus styles.

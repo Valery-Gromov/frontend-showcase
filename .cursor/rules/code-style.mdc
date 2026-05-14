@@ -1,0 +1,15 @@
+---
+alwaysApply: true
+---
+
+# Code Style Rules
+
+- Prefer simple, readable code over clever abstractions.
+- Do not create abstractions before there are at least 2 clear use cases.
+- Keep functions small and named by intent.
+- Avoid deeply nested conditions.
+- Prefer early returns.
+- Do not leave commented-out code.
+- Do not rename existing files/components unless explicitly asked.
+- Preserve existing public APIs unless the task requires changing them.
+- When changing types, update all affected usages.

@@ -1,0 +1,440 @@
+---
+alwaysApply: true
+---
+
+# Frontend Architecture Rules
+
+You are working in a React + TypeScript monorepo.
+
+This project is a frontend showcase for building production-like, data-heavy UI patterns.
+The goal is not to create quick demo code, but to design maintainable frontend architecture.
+
+## Core principles
+
+- Prefer clarity, explicitness, and maintainability over clever shortcuts.
+- Do not put the whole feature into `App.tsx`.
+- `App.tsx` must only compose app-level providers, layout, routing, and pages.
+- Keep components small, focused, and reusable.
+- Separate domain logic from generic UI.
+- Separate server state, query state, UI state, and derived state.
+- Prefer controlled components for reusable UI where state matters.
+- Do not add new libraries unless explicitly requested.
+- Do not use `any` unless there is a clear reason and it is explained.
+- Avoid hidden state that changes business behavior.
+
+## Monorepo ownership model
+
+The repository may contain multiple apps and shared packages.
+
+### `apps/*`
+
+Apps are product-specific applications.
+
+Use apps for:
+
+- pages
+- routes
+- layouts
+- feature containers
+- domain-specific components
+- state orchestration
+- URL synchronization
+- API usage through shared SDK/adapters
+- product-specific business rules
+- feature-specific types and models
+
+Apps must not define generic atoms, molecules, or reusable UI primitives locally.
+
+### `packages/ui`
+
+The UI package is the design library.
+
+Use `packages/ui` for:
+
+- atoms
+- molecules
+- generic organisms
+- design tokens
+- reusable styles
+- generic data-heavy UI primitives
+
+Examples:
+
+- Button
+- Checkbox
+- TextInput
+- Select
+- Badge
+- Chip
+- Tooltip
+- Loader
+- Skeleton
+- DataTable if it is generic and domain-agnostic
+- generic FilterBar if it is not tied to a specific product domain
+
+### Other packages
+
+Use shared packages for cross-app logic:
+
+- `packages/sdk` for API clients and API types
+- `packages/hooks` for reusable generic hooks
+- `packages/configs` for shared TypeScript, ESLint, build, or tooling configuration
+
+Do not duplicate logic across apps if it clearly belongs in a shared package.
+
+## Component ownership decision
+
+Before creating a component, decide where it belongs.
+
+1. Is it reusable across apps and has no domain logic?
+   - Put it in `packages/ui`.
+
+2. Is it generic data-heavy infrastructure?
+   - Put it in `packages/ui` or another shared package if one exists.
+
+3. Is it specific to one product domain or feature?
+   - Put it inside the relevant app feature folder.
+
+4. Does it call APIs, sync URL state, or know business rules?
+   - Keep it in the app feature/container layer, not in `packages/ui`.
+
+5. Is it only a small composition of generic UI with product-specific labels or fields?
+   - Keep it in the app feature folder.
+
+## Recommended app structure
+
+Use this structure for app-level code:
+
+```text
+apps/<app-name>/src/
+  app/
+    App.tsx
+    providers/
+    routes/
+    layout/
+
+  pages/
+    <PageName>/
+      index.ts
+      <PageName>.tsx
+
+  features/
+    <featureName>/
+      components/
+      containers/
+      model/
+      api/
+      lib/
+      types.ts
+      index.ts
+
+  shared/
+    lib/
+    types/
+```
+
+Notes:
+
+- Do not create `atoms/`, `molecules/`, or generic `organisms/` inside apps by default.
+- Feature components may compose shared UI components from `packages/ui`.
+- Feature containers may own business behavior, API calls, state orchestration, and URL sync.
+
+## Recommended UI package structure
+
+Use this structure for shared UI:
+
+```text
+packages/ui/src/
+  atoms/
+    Button/
+    Checkbox/
+    TextInput/
+    Select/
+    Badge/
+    Chip/
+    Tooltip/
+    Loader/
+    Skeleton/
+
+  molecules/
+    SearchField/
+    FilterSelect/
+    ActiveFilterChip/
+    TableHeaderCell/
+    RowCheckboxCell/
+
+  organisms/
+    DataTable/
+    FilterBar/
+    BulkActionBar/
+    PaginationBar/
+
+  styles/
+  tokens/
+  types/
+  index.ts
+```
+
+This structure is a guideline, not a reason to create unnecessary files.
+Only create components that are needed.
+
+## Styling rules
+
+- Do not use inline styles.
+- Use CSS modules, shared CSS files, or the styling approach already used in the project.
+- Do not hardcode random visual values inside components.
+- Prefer reusable design tokens when available.
+- Keep class names readable and intentional.
+- Avoid large global CSS changes unless explicitly requested.
+- Components must accept `className` when it is useful for composition.
+
+## TypeScript rules
+
+- Use explicit types for public component APIs.
+- Prefer discriminated unions for complex UI states.
+- Avoid boolean prop explosions when a variant union is clearer.
+- Avoid `any`.
+- Avoid broad `object` types for important data contracts.
+- Prefer generic types for reusable data components.
+- Keep domain types out of generic UI components.
+
+Good:
+
+```ts
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+```
+
+Bad:
+
+```ts
+type ButtonProps = {
+  primary?: boolean;
+  secondary?: boolean;
+  danger?: boolean;
+};
+```
+
+## Data-heavy UI rules
+
+Data-heavy UI is about state, interaction, and system constraints, not only about data volume.
+
+When building data-heavy UI:
+
+- Keep query state explicit.
+- Keep server state separate from UI state.
+- Keep derived state derived where possible.
+- Model loading states precisely.
+- Model error states precisely.
+- Treat URL state as a first-class concern when the screen should be shareable.
+- Avoid components that secretly fetch or mutate data.
+- Avoid storing the same truth in multiple places.
+- Avoid making the table responsible for the whole feature.
+
+## Query state
+
+Query state may include:
+
+- filters
+- search
+- sort
+- pagination
+- page size
+
+If URL is the source of truth for query state:
+
+- Parse URL into query state at the page/container level.
+- Update URL when query state changes.
+- Keep reusable UI components unaware of routing.
+
+## Loading state
+
+Do not model all loading as one `isLoading` when the distinction matters.
+
+Prefer explicit states such as:
+
+```ts
+type LoadingState = {
+  isInitialLoading: boolean;
+  isRefetching: boolean;
+  isMutating: boolean;
+  isBackgroundFetching?: boolean;
+};
+```
+
+Behavior guidelines:
+
+- Initial loading may use skeletons.
+- Refetching should usually keep existing data visible with subtle feedback.
+- Mutation loading should disable only the affected actions when possible.
+- Do not block the whole page unnecessarily.
+
+## Error state
+
+Separate error types when they require different UI behavior:
+
+- initial fetch error
+- refetch error
+- mutation error
+- partial success / partial failure
+- validation error
+- permission error
+
+Bulk actions with partial failure must not be treated as full failure.
+
+## Selection state
+
+Do not model table selection only as `selectedIds: string[]` if across-pages selection is required.
+
+Use a model that supports selecting all items matching the current query without loading all IDs.
+
+Example:
+
+```ts
+type SelectionState =
+  | { mode: "none" }
+  | { mode: "some"; ids: string[] }
+  | {
+      mode: "allMatching";
+      excludedIds: string[];
+      querySnapshot: unknown;
+    };
+```
+
+Rules:
+
+- Selection should be controlled by the page/container when it affects bulk actions.
+- DataTable may render selection UI but should not own selection business rules.
+- Selection behavior after filter/search changes must be explicit.
+- If selection was made across all matching items, preserve the query snapshot used for that selection.
+
+## DataTable rules
+
+A generic DataTable may live in `packages/ui` only if it is domain-agnostic.
+
+DataTable may:
+
+- render rows
+- render columns
+- render custom cells
+- render sorting UI
+- render selection UI
+- render loading, empty, and error states
+- emit events via callbacks
+
+DataTable must not:
+
+- fetch data
+- call APIs
+- know about product-specific business rules
+- sync URL
+- execute bulk actions
+- own query state
+- decide when selection resets after filters change
+
+## FilterBar rules
+
+A generic FilterBar may live in `packages/ui` only if it is domain-agnostic.
+
+FilterBar may:
+
+- render filter inputs
+- render search input
+- emit query changes
+- support reset
+- support instant or manual apply modes
+
+FilterBar must not:
+
+- fetch data
+- know about table internals
+- mutate server state
+- own product-specific filter logic
+- sync URL directly
+
+Product-specific filter compositions should live in the app feature folder.
+
+## BulkActionBar rules
+
+BulkActionBar may:
+
+- display selected count or selection summary
+- show available actions
+- disable actions when needed
+- explain disabled actions when data is provided
+- emit action events
+- allow clearing selection
+
+BulkActionBar must not:
+
+- call bulk APIs
+- mutate data
+- compute server-side eligibility by itself
+- own selection business rules
+
+## State ownership rules
+
+Page/container level should own:
+
+- API calls
+- server state orchestration
+- query state
+- URL sync
+- selection state
+- mutation handling
+- business rules
+- mapping domain data to generic UI props
+
+Reusable UI components should receive state and callbacks through props.
+
+## App.tsx rules
+
+`App.tsx` must stay small.
+
+Allowed in `App.tsx`:
+
+- app providers
+- routes
+- layout shell
+- top-level page composition
+
+Not allowed in `App.tsx`:
+
+- large feature implementation
+- table column definitions
+- mock API logic
+- business rules
+- long inline JSX for full screens
+- inline styles
+
+## Mock data and mock API rules
+
+Mock data is allowed for showcase work, but keep it separated.
+
+- Put mock API logic in a dedicated feature `api/` or shared mock folder.
+- Do not mix mock data generation into UI components.
+- Keep mock contracts close to real API contracts.
+- Model latency and partial failures when testing data-heavy UI behavior.
+
+## Before coding
+
+Before implementing a feature:
+
+1. Inspect the existing project structure.
+2. Identify whether the change belongs to an app or a package.
+3. Propose a short plan.
+4. Keep the implementation scoped.
+5. Ask for confirmation if ownership or architecture is unclear.
+
+## Common mistakes to avoid
+
+- Creating all files inside `src/` without architecture.
+- Putting everything in `App.tsx`.
+- Creating atoms or molecules inside an app when they belong to `packages/ui`.
+- Using inline styles.
+- Fetching data inside generic UI components.
+- Making reusable components depend on domain types.
+- Modeling loading as one boolean when the UI needs multiple states.
+- Modeling selection only as an array of IDs for across-pages workflows.
+- Losing selection silently when filters change.
+- Showing stale data as if it is fresh.
+- Hiding partial failures behind a generic error message.

@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+---
+
+# React Rules
+
+- Prefer composition over prop drilling when components become too configurable.
+- Do not put business logic into presentational components.
+- Avoid unnecessary useEffect.
+- Do not use useEffect for derived state if it can be calculated during render.
+- Keep hooks focused on one responsibility.
+- Custom hooks may orchestrate state, but UI packages must stay domain-agnostic.
+- Memoization is allowed only when there is a clear reason.
+- Do not add React.memo/useMemo/useCallback everywhere by default.
