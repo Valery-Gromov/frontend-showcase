@@ -122,6 +122,12 @@
   flex-wrap: wrap;
 }
 
+.toast-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .notice {
   border: 1px solid var(--color-info);
   background: var(--color-info-container);

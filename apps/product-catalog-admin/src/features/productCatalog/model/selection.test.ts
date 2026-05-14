@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { SelectionState } from '@frontend-showcase/ui';
-import { getSelectedCount, isSelectionActive } from './selection';
+import {
+  createAllMatchingSelection,
+  getSelectedCount,
+  isSelectionActive,
+} from './selection';
+import { getDefaultProductQuery } from './queryState';
 
 describe('product catalog selection', () => {
   it('treats none and empty some-selection as inactive', () => {
@@ -45,5 +50,16 @@ describe('product catalog selection', () => {
     };
 
     expect(getSelectedCount(selection, 2)).toBe(0);
+  });
+
+  it('creates allMatching selection from the current query snapshot without fetching ids', () => {
+    const query = { ...getDefaultProductQuery(), search: 'oil', brand: ['Shell'] };
+    const selection = createAllMatchingSelection(query);
+
+    expect(selection).toEqual({
+      mode: 'allMatching',
+      excludedIds: [],
+      querySnapshot: query,
+    });
   });
 });

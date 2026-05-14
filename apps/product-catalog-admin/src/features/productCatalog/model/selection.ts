@@ -1,4 +1,5 @@
 import type { SelectionState } from '@frontend-showcase/ui';
+import type { ProductQuery } from './types';
 
 export function isSelectionActive(selection: SelectionState): boolean {
   return selection.mode === 'allMatching' || (selection.mode === 'some' && selection.ids.length > 0);
@@ -9,4 +10,12 @@ export function getSelectedCount(selection: SelectionState, total: number | null
   if (selection.mode === 'some') return selection.ids.length;
   if (typeof total === 'number') return Math.max(0, total - selection.excludedIds.length);
   return 0;
+}
+
+export function createAllMatchingSelection(query: ProductQuery): SelectionState {
+  return {
+    mode: 'allMatching',
+    excludedIds: [],
+    querySnapshot: query,
+  };
 }

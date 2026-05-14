@@ -8,7 +8,6 @@ import {
   type BulkActionItem,
   type FilterBarQuery,
   type SelectionState,
-  type SortState,
 } from '@frontend-showcase/ui';
 import {
   createProduct,
@@ -38,23 +37,18 @@ import {
   validateProductForm,
 } from '../model/productForm';
 import { getExcelFileError } from '../model/productMutations';
-import { readCatalogPreferences, writeCatalogPreferences } from '../model/preferences';
+import { useProductCatalogQuery } from '../hooks/useProductCatalogQuery';
 import {
-  areProductQueriesEqual,
-  getDefaultFilterDraft,
-  queryFromFilterDraft,
-  readProductQueryFromUrl,
-  toFilterDraft,
-  writeProductQueryToUrl,
-} from '../model/queryState';
-import { getSelectedCount, isSelectionActive } from '../model/selection';
+  createAllMatchingSelection,
+  getSelectedCount,
+  isSelectionActive,
+} from '../model/selection';
 import { getProductTableColumns } from '../model/tableColumns';
 import type {
   BulkActionPayload,
   BulkActionState,
   BulkFailure,
   ExcelImportState,
-  PendingQueryChange,
   Product,
   ProductDrawerState,
   ProductFormErrors,
@@ -122,10 +116,6 @@ function isFilterDraftDirty(draft: FilterBarQuery, query: ProductQuery): boolean
 }
 
 export function ProductCatalogContainer() {
-  const [appliedQuery, setAppliedQuery] = useState<ProductQuery>(() => readProductQueryFromUrl(window.location.search));
-  const [filterDraft, setFilterDraft] = useState<FilterBarQuery>(() => toFilterDraft(appliedQuery));
-  const [filtersOpen, setFiltersOpen] = useState(() => readCatalogPreferences().filtersOpen);
-  const [pendingQueryChange, setPendingQueryChange] = useState<PendingQueryChange>(null);
   const [rows, setRows] = useState<Product[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [tableLoadState, setTableLoadState] = useState<TableLoadState>({ status: 'idle' });
@@ -142,6 +132,25 @@ export function ProductCatalogContainer() {
   const [productMutationState, setProductMutationState] = useState<ProductMutationState>({ status: 'idle' });
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
   const [excelImportState, setExcelImportState] = useState<ExcelImportState>({ status: 'closed' });
+  const clearSelection = () => setSelection({ mode: 'none' });
+  const {
+    appliedQuery,
+    appliedQueryRef,
+    filterDraft,
+    filtersOpen,
+    pendingQueryChange,
+    setFilterDraft,
+    setFiltersOpen,
+    handleApplyFilters,
+    handleConfirmCancel,
+    handleConfirmContinue,
+    handlePageChange,
+    handleResetFilters,
+    handleSortChange,
+  } = useProductCatalogQuery({
+    selection,
+    onSelectionInvalidated: clearSelection,
+  });
 
   const requestSequence = useRequestSequence();
   const { isOutdated: outdatedNoticeVisible, markFresh: markCatalogFresh } = useExternalChangeDetector({
@@ -149,8 +158,6 @@ export function ProductCatalogContainer() {
     probe: getCatalogVersion,
   });
   const hasLoadedRef = useRef(false);
-  const appliedQueryRef = useRef(appliedQuery);
-  const selectionRef = useRef(selection);
   const bulkActionsMenuWrapRef = useRef<HTMLDivElement | null>(null);
 
   const options = useMemo(() => getFilterOptions(), []);
@@ -160,23 +167,6 @@ export function ProductCatalogContainer() {
     productDrawerState.mode === 'closed' ? DEFAULT_PRODUCT_FORM_VALUE : productDrawerState.initialValue;
   const productFormDirty =
     productDrawerState.mode !== 'closed' && isProductFormDirty(productFormDraft, productFormInitialValue);
-  const tableSelection = useMemo<SelectionState>(() => {
-    if (selection.mode !== 'allMatching') return selection;
-
-    const disabledPageIds = rows.filter((row) => row.disabled).map((row) => row.id);
-    return {
-      ...selection,
-      excludedIds: Array.from(new Set([...selection.excludedIds, ...disabledPageIds])),
-    };
-  }, [rows, selection]);
-
-  useEffect(() => {
-    appliedQueryRef.current = appliedQuery;
-  }, [appliedQuery]);
-
-  useEffect(() => {
-    selectionRef.current = selection;
-  }, [selection]);
 
   useEffect(() => {
     const fetchAppliedQuery = async () => {
@@ -217,10 +207,6 @@ export function ProductCatalogContainer() {
   }, []);
 
   useEffect(() => {
-    writeCatalogPreferences({ filtersOpen });
-  }, [filtersOpen]);
-
-  useEffect(() => {
     if (!bulkActionsOpen) return undefined;
 
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -244,51 +230,6 @@ export function ProductCatalogContainer() {
     };
   }, [bulkActionsOpen]);
 
-  const commitQueryChange = (nextQuery: ProductQuery, source: NonNullable<PendingQueryChange>['source']) => {
-    if (areProductQueriesEqual(appliedQueryRef.current, nextQuery)) {
-      if (source === 'apply' || source === 'reset' || source === 'popstate') {
-        setFilterDraft(toFilterDraft(nextQuery));
-      }
-      return;
-    }
-
-    if (source !== 'popstate') {
-      writeProductQueryToUrl(nextQuery, 'push');
-    }
-
-    if (source === 'apply' || source === 'reset' || source === 'popstate') {
-      setFilterDraft(toFilterDraft(nextQuery));
-    }
-
-    setAppliedQuery(nextQuery);
-  };
-
-  const requestQueryChange = (nextQuery: ProductQuery, source: NonNullable<PendingQueryChange>['source']) => {
-    if (areProductQueriesEqual(appliedQueryRef.current, nextQuery)) {
-      if (source === 'reset' || source === 'apply') {
-        setFilterDraft(toFilterDraft(nextQuery));
-      }
-      return;
-    }
-
-    if (isSelectionActive(selectionRef.current)) {
-      setPendingQueryChange({ nextQuery, source });
-      return;
-    }
-
-    commitQueryChange(nextQuery, source);
-  };
-
-  useEffect(() => {
-    const onPopState = () => {
-      const nextQuery = readProductQueryFromUrl(window.location.search);
-      requestQueryChange(nextQuery, 'popstate');
-    };
-
-    window.addEventListener('popstate', onPopState);
-    return () => window.removeEventListener('popstate', onPopState);
-  }, []);
-
   const refreshCurrentTable = async () => {
     const token = requestSequence.next();
     setTableLoadState({ status: 'refreshLoading' });
@@ -311,38 +252,8 @@ export function ProductCatalogContainer() {
     }
   };
 
-  const handleConfirmCancel = () => {
-    if (pendingQueryChange?.source === 'popstate') {
-      writeProductQueryToUrl(appliedQueryRef.current, 'replace');
-    }
-    setPendingQueryChange(null);
-  };
-
-  const handleConfirmContinue = () => {
-    if (!pendingQueryChange) return;
-    const change = pendingQueryChange;
-    setSelection({ mode: 'none' });
-    setPendingQueryChange(null);
-    commitQueryChange(change.nextQuery, change.source);
-  };
-
-  const handleApplyFilters = (nextDraft: FilterBarQuery) => {
-    requestQueryChange(queryFromFilterDraft(nextDraft, appliedQueryRef.current), 'apply');
-    setFiltersOpen(false);
-  };
-
-  const handleResetFilters = () => {
-    const nextDraft = getDefaultFilterDraft();
-    requestQueryChange(queryFromFilterDraft(nextDraft, appliedQueryRef.current), 'reset');
-    setFiltersOpen(false);
-  };
-
-  const handleSortChange = (nextSort: SortState) => {
-    requestQueryChange({ ...appliedQueryRef.current, sort: nextSort, page: 1 }, 'sort');
-  };
-
-  const handlePageChange = (page: number) => {
-    requestQueryChange({ ...appliedQueryRef.current, page }, 'pagination');
+  const selectAllMatching = () => {
+    setSelection(createAllMatchingSelection(appliedQueryRef.current));
   };
 
   const closeProductDrawer = () => {
@@ -491,6 +402,8 @@ export function ProductCatalogContainer() {
     (bulkActionState.actionId === 'status-active' || bulkActionState.actionId === 'change-category');
   const activeFilterCount = getActiveFilterCount(appliedQuery);
   const filterDraftDirty = isFilterDraftDirty(filterDraft, appliedQuery);
+  const canSelectAllMatching =
+    rows.length > 0 && selection.mode !== 'allMatching' && !tableBusy && bulkActionState.status !== 'submitting';
 
   return (
     <div className="page">
@@ -516,11 +429,11 @@ export function ProductCatalogContainer() {
         />
 
         <BulkActionBar
-          selection={tableSelection}
+          selection={selection}
           selectedCount={selectedCount}
           totalKnown={total}
           loadingActionId={bulkActionState.status === 'submitting' ? bulkActionState.actionId : null}
-          onClearSelection={() => setSelection({ mode: 'none' })}
+          onClearSelection={clearSelection}
           onAction={(actionId) => void runBulkAction(actionId)}
           toolbarActions={
             <>
@@ -533,6 +446,9 @@ export function ProductCatalogContainer() {
                 {activeFilterCount > 0 ? `Filters · ${activeFilterCount}` : 'Filters'}
               </Button>
               {filterDraftDirty ? <span className="hint">Unsaved filters</span> : null}
+              <Button variant="secondary" onClick={selectAllMatching} disabled={!canSelectAllMatching}>
+                Select all matching filters
+              </Button>
               <div ref={bulkActionsMenuWrapRef} className="bulk-actions-menu-wrap">
                 <Button
                   id="bulk-actions-menu-button"
@@ -595,11 +511,16 @@ export function ProductCatalogContainer() {
         {toast ? (
           <div className="toast" role="status">
             <span>{toast.message}</span>
-            {toast.showDetailsAction ? (
-              <Button variant="ghost" onClick={() => setFailureDetailsOpen(true)}>
-                View details
+            <div className="toast-actions">
+              {toast.showDetailsAction ? (
+                <Button variant="ghost" onClick={() => setFailureDetailsOpen(true)}>
+                  View details
+                </Button>
+              ) : null}
+              <Button variant="ghost" aria-label="Dismiss notification" onClick={() => setToast(null)}>
+                x
               </Button>
-            ) : null}
+            </div>
           </div>
         ) : null}
 
@@ -617,7 +538,7 @@ export function ProductCatalogContainer() {
           getRowMeta={(row) => ({ id: row.id, disabled: row.disabled, disabledReason: row.disabledReason })}
           sort={appliedQuery.sort}
           onSortChange={handleSortChange}
-          selection={tableSelection}
+          selection={selection}
           onSelectionChange={setSelection}
           loadState={dataTableLoadState}
           errorDescription={getErrorMessage(tableLoadState)}

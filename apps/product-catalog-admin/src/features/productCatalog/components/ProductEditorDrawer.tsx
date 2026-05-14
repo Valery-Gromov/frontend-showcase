@@ -1,4 +1,4 @@
-import { useEffect, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useRef, type KeyboardEvent, type MouseEvent } from 'react';
 import { ProductForm } from './ProductForm';
 import type { ProductFormErrors, ProductFormValue, ProductMutationState } from '../model/types';
 import type { SelectOption } from '@frontend-showcase/ui';
@@ -102,12 +102,19 @@ export function ProductEditorDrawer({
     }
   };
 
+  const handleBackdropClick = (event: MouseEvent<HTMLElement>) => {
+    if (event.target === event.currentTarget) {
+      onCancel();
+    }
+  };
+
   return (
     <aside
       className="drawer"
       role="dialog"
       aria-modal="true"
       aria-labelledby="product-editor-title"
+      onClick={handleBackdropClick}
       onKeyDown={handleKeyDown}
     >
       <div ref={panelRef} className="drawer-panel" tabIndex={-1}>
