@@ -13,7 +13,7 @@ This document tracks what is done, what is in progress, and what is planned. The
 - `apps/todo-app`: sandbox for the UI atoms.
 - `apps/product-catalog-admin`: data-heavy admin running over the SDK + mock network, with `useRequestSequence` and `useExternalChangeDetector` integrated, `typedStorage` persisting `filtersOpen`.
 - `apps/data-hub`: architecture notes only (C4 diagrams), no application code yet.
-- Phase 4 — UI design system uplift: Material 3-inspired token layer (`tokens.css`), `ThemeProvider` with `prefers-color-scheme` + persisted preference, CSS Modules across atoms, molecules and organisms, app-level stylesheets rebased onto the same tokens (no hex literals outside `tokens.css`).
+- Phase 4 — UI design system uplift: Material 3-inspired token layer (`tokens.css`), `ThemeProvider` with `prefers-color-scheme` + persisted preference, CSS Modules across atoms, molecules and organisms, app-level stylesheets rebased onto the same tokens (no hex literals outside `tokens.css`). Implementation record: [`docs/design-system-phase4.md`](design-system-phase4.md).
 - Phase 7 — `docs/comparison.md` (catalog vs. dashboard vs. log viewer).
 - Phase 8 — full ADR set in `docs/decisions/` (0001–0007).
 - Phase 9 (initial slice) — Vitest set up at root, tests for SDK `httpClient` / `typedStorage` and `mock-network` (27 tests), GitHub Actions CI running `typecheck` + `test`.

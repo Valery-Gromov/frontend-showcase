@@ -6,6 +6,7 @@ See also:
 
 - [`docs/dependency-graph.md`](dependency-graph.md) — import rules between packages and apps.
 - [`docs/comparison.md`](comparison.md) — comparison of data-handling approaches across the apps.
+- [`docs/design-system-phase4.md`](design-system-phase4.md) — what shipped in Phase 4 (tokens, ThemeProvider, CSS Modules, app wiring).
 - [`docs/decisions/`](decisions/) — Architecture Decision Records.
 
 ## Monorepo layout
