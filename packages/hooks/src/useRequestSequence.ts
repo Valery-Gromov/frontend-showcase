@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 export interface RequestTokenType {
   /** True if no newer token has been issued since this one was created. */
@@ -44,5 +44,5 @@ export function useRequestSequence(): RequestSequenceType {
     };
   }, []);
 
-  return { next };
+  return useMemo(() => ({ next }), [next]);
 }
