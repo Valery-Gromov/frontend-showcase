@@ -11,6 +11,7 @@ This app demonstrates the hard parts of admin UI that are easy to hide in small 
 ## What It Demonstrates
 
 - URL as the source of truth for filters, sorting, and pagination.
+- Selection model with `none | some | allMatching` and query snapshots.
 - Controlled table/filter/bulk UI wired from app-owned state.
 - Pessimistic bulk mutations with partial-success handling.
 - Race-condition protection with `useRequestSequence`.
@@ -55,4 +56,4 @@ pnpm --filter @frontend-showcase/product-catalog-admin build
 
 The app intentionally does not use TanStack Query. The catalog query is shareable and mutations are pessimistic with partial-success semantics, so a small explicit state machine is easier to inspect than a server-state cache.
 
-The shared `SelectionState` contract includes `allMatching` for bulk endpoints and reusable UI, but the current catalog UI only exposes explicit row/page selection. A dedicated "select all matching filters" affordance would be a follow-up, not a documented shipped workflow.
+The shared `SelectionState` contract includes `allMatching` for bulk endpoints and reusable UI. The catalog exposes it through a "Select all matching filters" action while keeping exact selected counts optional because the mock list endpoint returns `total: null`.

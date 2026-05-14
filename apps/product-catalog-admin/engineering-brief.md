@@ -78,7 +78,7 @@ The user is a catalog operations specialist responsible for maintaining a B2B pr
 - **Decision**: consume the shared `SelectionState = none | some | allMatching` contract and keep actual selection in the catalog container.
 - **Why**: table and bulk-action UI stay generic, while the app decides how selection interacts with query changes and bulk endpoints.
 - **Rejected alternatives**: hidden selection state inside `DataTable`; a boolean `selectAll` plus IDs.
-- **Trade-off**: the app must explicitly handle all selection modes. In the current UI, explicit row/page selection is reachable; the `allMatching` shape is supported by the shared type and mock bulk endpoint, but there is no dedicated "select all matching filters" UI affordance yet.
+- **Trade-off**: the app must explicitly handle all selection modes. The `allMatching` UI action captures the current query snapshot, but the exact selected count remains unknown when the backend does not return a total.
 
 ### External-change detection instead of automatic overwrite
 
