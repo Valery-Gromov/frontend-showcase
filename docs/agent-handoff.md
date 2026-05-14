@@ -43,6 +43,17 @@ pnpm --filter @frontend-showcase/log-viewer build
 - Changed: added `.cursor/rules/context-management.mdc`, `.cursor/rules/agent-handoff.mdc`,
   `docs/agent-handoff.md`, and updated `.gitignore` so `.cursor/rules/*.mdc` can be versioned.
 - Purpose: make future agents choose explicit context scope, keep apps aware of package contracts, and document non-trivial workspace changes.
-- Verification: not yet run; this is docs/rules-only.
+- Verification: `pnpm hygiene` passed after adding the hygiene script and workspace README coverage.
+- Commits: `576d926 chore(agents): add context and handoff rules`; hygiene automation commit pending.
+- Next suggested step: use `pnpm verify` before final handoff on future cross-cutting changes.
+
+### 2026-05-14 — Repo hygiene automation
+
+- Scope profile: cross-cutting.
+- Changed: added `scripts/repo-hygiene.mjs`, `pnpm hygiene`, `pnpm verify`, and wired CI to `pnpm verify`.
+- Changed: removed empty stale directories `apps/admin-app` and `packages/config`.
+- Changed: added missing workspace READMEs for `product-catalog-admin`, `todo-app`, `sdk`, `ui`,
+  `hooks`, and `mock-network`.
+- Verification: `pnpm verify` passed (hygiene, workspace typecheck, 47 tests).
 - Commits: not yet committed.
-- Next suggested step: run a repo hygiene pass for stale folders/build artifacts, then update this handoff with the result.
+- Next suggested step: run `pnpm verify`, then commit the hygiene automation and README coverage.
