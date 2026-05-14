@@ -18,17 +18,15 @@ This note is the **ground truth** for what landed in Phase 4. It complements [AD
 
 ## Thematic commits (three slices)
 
-On branch `showcase`, Phase 4 is three commits (newest first):
+On branch `showcase`, Phase 4 landed as three commits (newest first), with these hashes at the time of writing:
 
-1. `feat(ui): migrate molecules and organisms to CSS Modules and tokens`
-2. `feat(ui): migrate atoms to CSS Modules and tokens`
-3. `feat(ui): introduce Material 3-inspired design tokens, ThemeProvider, dark mode`
+| Commit | Subject |
+| --- | --- |
+| `f95de77` | `feat(ui): migrate molecules and organisms to CSS Modules and tokens` |
+| `1bbba4f` | `feat(ui): migrate atoms to CSS Modules and tokens` |
+| `592e934` | `feat(ui): introduce Material 3-inspired design tokens, ThemeProvider, dark mode` |
 
-Verify exact hashes with:
-
-```bash
-git log --oneline -5
-```
+This implementation record was added in `7f21b54` (`docs(repo): add Phase 4 design system implementation record`). Re-verify with `git log --oneline` if history was rebased.
 
 ## Contract for future work (do **not** redo without reason)
 
