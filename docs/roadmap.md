@@ -19,11 +19,14 @@ This document tracks what is done, what is in progress, and what is planned. The
 - Phase 4 — UI design system uplift: Material 3-inspired token layer (`tokens.css`), `ThemeProvider` with `prefers-color-scheme` + persisted preference, CSS Modules across atoms, molecules and organisms, app-level stylesheets rebased onto the same tokens (no hex literals outside `tokens.css`). Implementation record: [`docs/design-system-phase4.md`](design-system-phase4.md).
 - Phase 7 — `docs/comparison.md` (catalog vs. dashboard vs. log viewer).
 - Phase 8 — full ADR set in `docs/decisions/` (0001–0007).
-- Phase 9 (initial slice) — Vitest set up at root, tests for SDK `httpClient` / `typedStorage` and `mock-network` (27 tests), GitHub Actions CI running `typecheck` + `test`.
+- Phase 9 — Vitest set up at root, tests for SDK `httpClient` / `typedStorage`,
+  `mock-network`, reusable hooks, and catalog query/selection models (47 tests).
+  GitHub Actions CI runs workspace `typecheck` + all package/app test scripts.
 
 ## Next
 
-- Phase 9 (rest) — hooks tests (`@testing-library/react` + jsdom), container-level tests in `apps/product-catalog-admin`.
+- Phase 9 (optional hardening) — container-level tests in `apps/product-catalog-admin` and focused
+  helper tests for `data-hub` / `log-viewer` if their pure logic is split further.
 - Phase 10 — final polish (a11y audit, screenshots, performance notes).
 
 ## Monorepo complexity levels

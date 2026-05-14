@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.32.1",
   "scripts": {
     "build": "pnpm -r build",
-    "test": "pnpm -r --filter \"./packages/**\" test",
+    "test": "pnpm -r --if-present test",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "clean": "echo clean"
@@ -18,4 +18,3 @@
     "onlyBuiltDependencies": ["esbuild"]
   }
 }
-
