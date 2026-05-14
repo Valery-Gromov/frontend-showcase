@@ -1,0 +1,29 @@
+{
+  "name": "@frontend-showcase/data-hub",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "echo lint"
+  },
+  "dependencies": {
+    "@frontend-showcase/hooks": "workspace:*",
+    "@frontend-showcase/sdk": "workspace:*",
+    "@frontend-showcase/ui": "workspace:*",
+    "@tanstack/react-query": "^5.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "recharts": "^2.12.0"
+  },
+  "devDependencies": {
+    "@frontend-showcase/mock-network": "workspace:*",
+    "@types/react": "^18.3.24",
+    "@types/react-dom": "^18.3.7",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.7"
+  }
+}
