@@ -22,12 +22,15 @@ This document tracks what is done, what is in progress, and what is planned. The
 - Phase 9 — Vitest set up at root, tests for SDK `httpClient` / `typedStorage`,
   `mock-network`, reusable hooks, and catalog query/selection models (47 tests).
   GitHub Actions CI runs workspace `typecheck` + all package/app test scripts.
+- Phase 10 — focused catalog a11y polish (drawer focus trap, bulk menu semantics, live status text),
+  README screenshots, and [`docs/performance.md`](performance.md).
 
 ## Next
 
 - Phase 9 (optional hardening) — container-level tests in `apps/product-catalog-admin` and focused
   helper tests for `data-hub` / `log-viewer` if their pure logic is split further.
-- Phase 10 — final polish (a11y audit, screenshots, performance notes).
+- Continue optional hardening only where it clarifies the showcase: catalog container tests,
+  keyboard interaction tests, and fresh screenshots after visual changes.
 
 ## Monorepo complexity levels
 

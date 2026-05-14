@@ -17,7 +17,32 @@ Production-style monorepo that exercises real data-heavy frontend problems: serv
 | Log viewer with cursor pagination + virtualization | [`apps/log-viewer`](apps/log-viewer) |
 | UI atom sandbox | [`apps/todo-app`](apps/todo-app) |
 | Comparison of data-heavy approaches | [`docs/comparison.md`](docs/comparison.md) |
+| Performance notes and budgets | [`docs/performance.md`](docs/performance.md) |
 | ADRs (why a given decision was taken) | [`docs/decisions/`](docs/decisions/) |
+
+## Verification
+
+```bash
+pnpm -r typecheck
+pnpm test
+pnpm --filter @frontend-showcase/product-catalog-admin build
+pnpm --filter @frontend-showcase/data-hub build
+pnpm --filter @frontend-showcase/log-viewer build
+```
+
+Current test surface: SDK HTTP/storage, mock-network, reusable hooks, and catalog query/selection
+models. See [`docs/performance.md`](docs/performance.md) for the performance budget and measurement
+notes.
+
+## Screenshots
+
+| Catalog light | Catalog dark |
+| --- | --- |
+| ![Product catalog admin in light theme](docs/assets/screenshots/catalog-light.png) | ![Product catalog admin in dark theme](docs/assets/screenshots/catalog-dark.png) |
+
+| Data Hub | Log Viewer |
+| --- | --- |
+| ![Data Hub analytics dashboard](docs/assets/screenshots/data-hub.png) | ![Virtualized log viewer](docs/assets/screenshots/log-viewer.png) |
 
 ## Apps
 
@@ -105,6 +130,7 @@ frontend-showcase/
 │   ├── architecture.md
 │   ├── dependency-graph.md
 │   ├── comparison.md
+│   ├── performance.md
 │   └── decisions/
 ├── pnpm-workspace.yaml
 ├── package.json
