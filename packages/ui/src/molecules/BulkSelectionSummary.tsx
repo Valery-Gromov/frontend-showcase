@@ -6,13 +6,22 @@ export type BulkSelectionMode = 'none' | 'page' | 'allMatching';
 export type BulkSelectionSummaryProps = {
   mode: BulkSelectionMode;
   selectedCount: number;
+  excludedCount?: number;
   totalKnown?: number | null;
   onClear: () => void;
 };
 
-function getSummaryText(mode: BulkSelectionMode, selectedCount: number, totalKnown?: number | null): string {
+function getSummaryText(
+  mode: BulkSelectionMode,
+  selectedCount: number,
+  excludedCount = 0,
+  totalKnown?: number | null,
+): string {
   if (mode === 'none') return 'No items selected';
   if (mode === 'page') return `${selectedCount} items selected`;
+  if (typeof totalKnown === 'number' && excludedCount > 0) {
+    return `${selectedCount} items matching current filters selected`;
+  }
   if (typeof totalKnown === 'number') return `All ${totalKnown} items matching current filters selected`;
   return 'All items matching current filters selected';
 }
@@ -20,12 +29,13 @@ function getSummaryText(mode: BulkSelectionMode, selectedCount: number, totalKno
 export function BulkSelectionSummary({
   mode,
   selectedCount,
+  excludedCount = 0,
   totalKnown,
   onClear,
 }: BulkSelectionSummaryProps) {
   return (
     <div className={styles.summary} aria-live="polite" aria-atomic="true">
-      <span>{getSummaryText(mode, selectedCount, totalKnown)}</span>
+      <span>{getSummaryText(mode, selectedCount, excludedCount, totalKnown)}</span>
       {mode !== 'none' ? (
         <Button variant="ghost" onClick={onClear}>
           Clear selection

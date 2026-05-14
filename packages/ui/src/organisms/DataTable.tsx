@@ -103,10 +103,7 @@ export function DataTable<T>({
                       onSelectionChange({ mode: 'some', ids: Array.from(new Set(pageRowIds)) });
                     } else {
                       if (selection.mode === 'allMatching') {
-                        onSelectionChange({
-                          ...selection,
-                          excludedIds: Array.from(new Set([...selection.excludedIds, ...pageRowIds])),
-                        });
+                        onSelectionChange({ mode: 'none' });
                         return;
                       }
                       onSelectionChange({ mode: 'none' });
@@ -186,20 +183,20 @@ export function DataTable<T>({
             rows.map((row) => {
               const meta = getRowMeta(row);
               const selected = isRowSelected(meta.id, selection);
+              const allMatchingLocked = selection.mode === 'allMatching' && !meta.disabled;
               return (
                 <tr key={meta.id} className={styles.bodyRow} data-disabled={meta.disabled}>
                   {selectable ? (
                     <td className={styles.cell}>
                       <RowCheckboxCell
                         checked={selected}
-                        disabled={Boolean(meta.disabled)}
-                        disabledReason={meta.disabledReason}
+                        disabled={Boolean(meta.disabled) || allMatchingLocked}
+                        disabledReason={
+                          meta.disabledReason ??
+                          (allMatchingLocked ? 'Clear selection to choose individual rows' : undefined)
+                        }
                         onChange={(checked) => {
                           if (selection.mode === 'allMatching') {
-                            const excludedSet = new Set(selection.excludedIds);
-                            if (checked) excludedSet.delete(meta.id);
-                            else excludedSet.add(meta.id);
-                            onSelectionChange({ ...selection, excludedIds: Array.from(excludedSet) });
                             return;
                           }
                           const selectedIds = new Set(selection.mode === 'some' ? selection.ids : []);

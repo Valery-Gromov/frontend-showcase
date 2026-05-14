@@ -31,6 +31,10 @@ function getSummaryMode(selection: SelectionState): 'none' | 'page' | 'allMatchi
   return 'page';
 }
 
+function getExcludedCount(selection: SelectionState): number {
+  return selection.mode === 'allMatching' ? selection.excludedIds.length : 0;
+}
+
 export function BulkActionBar({
   selection,
   selectedCount,
@@ -50,6 +54,7 @@ export function BulkActionBar({
       <BulkSelectionSummary
         mode={mode}
         selectedCount={selectedCount}
+        excludedCount={getExcludedCount(selection)}
         totalKnown={totalKnown}
         onClear={onClearSelection}
       />
