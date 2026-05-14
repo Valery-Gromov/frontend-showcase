@@ -12,7 +12,10 @@ This document tracks what is done, what is in progress, and what is planned. The
 - `packages/mock-network`: `createMockFetch(routes, { latency, flakyChance })`.
 - `apps/todo-app`: sandbox for the UI atoms.
 - `apps/product-catalog-admin`: data-heavy admin running over the SDK + mock network, with `useRequestSequence` and `useExternalChangeDetector` integrated, `typedStorage` persisting `filtersOpen`.
-- `apps/data-hub`: architecture notes only (C4 diagrams), no application code yet.
+- `apps/data-hub`: real analytics dashboard on TanStack Query + Recharts, using SDK + mock-network,
+  shared UI tokens, background refresh, stale snapshot notice, and optimistic revenue-target mutation.
+- `apps/log-viewer`: virtualized append-only log stream with cursor pagination, level filtering,
+  live tail, pause-on-scroll-up, jump-to-now, and click-to-pin details.
 - Phase 4 — UI design system uplift: Material 3-inspired token layer (`tokens.css`), `ThemeProvider` with `prefers-color-scheme` + persisted preference, CSS Modules across atoms, molecules and organisms, app-level stylesheets rebased onto the same tokens (no hex literals outside `tokens.css`). Implementation record: [`docs/design-system-phase4.md`](design-system-phase4.md).
 - Phase 7 — `docs/comparison.md` (catalog vs. dashboard vs. log viewer).
 - Phase 8 — full ADR set in `docs/decisions/` (0001–0007).
@@ -20,8 +23,6 @@ This document tracks what is done, what is in progress, and what is planned. The
 
 ## Next
 
-- Phase 5 — `apps/data-hub` as a real analytics dashboard on TanStack Query + Recharts.
-- Phase 6 — `apps/log-viewer` with cursor pagination + `@tanstack/react-virtual`.
 - Phase 9 (rest) — hooks tests (`@testing-library/react` + jsdom), container-level tests in `apps/product-catalog-admin`.
 - Phase 10 — final polish (a11y audit, screenshots, performance notes).
 

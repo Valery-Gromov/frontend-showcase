@@ -87,6 +87,6 @@ Full rules and forbidden imports live in [`docs/dependency-graph.md`](dependency
 | App | Document |
 | --- | --- |
 | `product-catalog-admin` | `apps/product-catalog-admin/README.md` (TBD) |
-| `data-hub` | [`apps/data-hub/README.md`](../apps/data-hub/README.md) — contains C4 Context and Container diagrams |
-| `log-viewer` | `apps/log-viewer/README.md` (TBD) |
+| `data-hub` | [`apps/data-hub/README.md`](../apps/data-hub/README.md) |
+| `log-viewer` | [`apps/log-viewer/README.md`](../apps/log-viewer/README.md) |
 | `todo-app` | `apps/todo-app/README.md` (TBD) |
