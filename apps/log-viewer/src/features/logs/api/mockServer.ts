@@ -113,7 +113,7 @@ export function createLogMockRoutes(): MockRoute[] {
   return [
     {
       method: 'GET',
-      pattern: '/logs',
+      pattern: '/api/logs',
       handler: ({ query }) => {
         appendLiveLogs();
         return { status: 200, body: fetchLogs(queryFromSearchParams(query)) };

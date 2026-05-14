@@ -167,7 +167,7 @@ export function createCatalogMockRoutes(): MockRoute[] {
   return [
     {
       method: 'GET',
-      pattern: '/products',
+      pattern: '/api/products',
       handler: ({ query }) => {
         const parsed = queryFromSearchParams(query);
         const filtered = productsDb.filter((item) => matchesQuery(item, parsed));
@@ -186,7 +186,7 @@ export function createCatalogMockRoutes(): MockRoute[] {
     },
     {
       method: 'POST',
-      pattern: '/products',
+      pattern: '/api/products',
       handler: ({ body }) => {
         const input = body as ProductMutationInput;
         if (Math.random() < 0.08) {
@@ -208,7 +208,7 @@ export function createCatalogMockRoutes(): MockRoute[] {
     },
     {
       method: 'PUT',
-      pattern: '/products/:id',
+      pattern: '/api/products/:id',
       handler: ({ params, body }) => {
         const { id } = params;
         if (!id) return { status: 400, body: { message: 'Missing product id.' } };
@@ -237,7 +237,7 @@ export function createCatalogMockRoutes(): MockRoute[] {
     },
     {
       method: 'POST',
-      pattern: '/products/bulk',
+      pattern: '/api/products/bulk',
       handler: ({ body }) => {
         const { selection, payload } = body as { selection: Selection; payload: BulkActionPayload };
         const selectedIds = resolveSelectionIds(selection);
@@ -279,7 +279,7 @@ export function createCatalogMockRoutes(): MockRoute[] {
     },
     {
       method: 'POST',
-      pattern: '/products/import',
+      pattern: '/api/products/import',
       handler: ({ body }) => {
         const { fileName } = body as { fileName?: string };
         if (!fileName || (!fileName.toLowerCase().endsWith('.xlsx') && !fileName.toLowerCase().endsWith('.xls'))) {

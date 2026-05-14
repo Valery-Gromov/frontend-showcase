@@ -144,22 +144,22 @@ export function createAnalyticsMockRoutes(): MockRoute[] {
   return [
     {
       method: 'GET',
-      pattern: '/analytics/filter-options',
+      pattern: '/api/analytics/filter-options',
       handler: () => ({ status: 200, body: analyticsFilterOptions }),
     },
     {
       method: 'GET',
-      pattern: '/analytics/dashboard',
+      pattern: '/api/analytics/dashboard',
       handler: ({ query }) => ({ status: 200, body: buildDashboard(parseFilters(query)) }),
     },
     {
       method: 'GET',
-      pattern: '/analytics/revenue-target',
+      pattern: '/api/analytics/revenue-target',
       handler: () => ({ status: 200, body: revenueTarget }),
     },
     {
       method: 'PATCH',
-      pattern: '/analytics/revenue-target',
+      pattern: '/api/analytics/revenue-target',
       handler: ({ body }) => {
         const value = Number((body as { value?: unknown } | undefined)?.value);
         if (!Number.isFinite(value) || value < 100_000) {
