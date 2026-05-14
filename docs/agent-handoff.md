@@ -37,6 +37,17 @@ pnpm --filter @frontend-showcase/log-viewer build
 
 ## Recent Agent Entries
 
+### 2026-05-14 — Product catalog app case-study docs
+
+- Scope profile: app.
+- Changed: added `apps/product-catalog-admin/engineering-brief.md` and rewrote
+  `apps/product-catalog-admin/README.md` as a shorter hiring-manager entry point.
+- Purpose: document the catalog app as a standalone showcase case study without changing app code.
+- Note: audit found that `SelectionState.allMatching` is supported by shared types and the mock bulk
+  endpoint, but the current catalog UI does not expose a "select all matching filters" affordance.
+- Verification: `pnpm hygiene` passed.
+- Commit: included in `docs(product-catalog-admin): add engineering brief and app readme`.
+
 ### 2026-05-14 — Context management rules and handoff setup
 
 - Scope profile: cross-cutting.
