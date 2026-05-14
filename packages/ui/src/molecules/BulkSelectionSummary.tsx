@@ -24,7 +24,7 @@ export function BulkSelectionSummary({
   onClear,
 }: BulkSelectionSummaryProps) {
   return (
-    <div className={styles.summary}>
+    <div className={styles.summary} aria-live="polite" aria-atomic="true">
       <span>{getSummaryText(mode, selectedCount, totalKnown)}</span>
       {mode !== 'none' ? (
         <Button variant="ghost" onClick={onClear}>

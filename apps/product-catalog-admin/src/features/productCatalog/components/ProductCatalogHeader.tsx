@@ -16,6 +16,7 @@ export function ProductCatalogHeader({
   onOpenImport,
 }: ProductCatalogHeaderProps) {
   const isRefreshing = loadState.status === 'refreshLoading';
+  const statusText = isRefreshing ? 'Refreshing catalog data' : `Catalog updated: ${lastUpdatedAt || 'not yet'}`;
 
   return (
     <header className="header">
@@ -28,9 +29,12 @@ export function ProductCatalogHeader({
           Add product
         </Button>
         <Badge variant="info">URL-driven query</Badge>
-        <Badge variant={isRefreshing ? 'warning' : 'neutral'}>
+        <Badge variant={isRefreshing ? 'warning' : 'neutral'} aria-hidden="true">
           {isRefreshing ? 'Refreshing...' : `Updated: ${lastUpdatedAt || '-'}`}
         </Badge>
+        <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+          {statusText}
+        </span>
         <ThemeToggle />
       </div>
     </header>

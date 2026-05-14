@@ -151,6 +151,7 @@ export function ProductCatalogContainer() {
   const hasLoadedRef = useRef(false);
   const appliedQueryRef = useRef(appliedQuery);
   const selectionRef = useRef(selection);
+  const bulkActionsMenuWrapRef = useRef<HTMLDivElement | null>(null);
 
   const options = useMemo(() => getFilterOptions(), []);
   const columns = useMemo(() => getProductTableColumns(), []);
@@ -218,6 +219,30 @@ export function ProductCatalogContainer() {
   useEffect(() => {
     writeCatalogPreferences({ filtersOpen });
   }, [filtersOpen]);
+
+  useEffect(() => {
+    if (!bulkActionsOpen) return undefined;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setBulkActionsOpen(false);
+      }
+    };
+
+    const closeOnOutsidePointer = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Node && bulkActionsMenuWrapRef.current?.contains(target)) return;
+      setBulkActionsOpen(false);
+    };
+
+    document.addEventListener('keydown', closeOnEscape);
+    document.addEventListener('mousedown', closeOnOutsidePointer);
+
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('mousedown', closeOnOutsidePointer);
+    };
+  }, [bulkActionsOpen]);
 
   const commitQueryChange = (nextQuery: ProductQuery, source: NonNullable<PendingQueryChange>['source']) => {
     if (areProductQueriesEqual(appliedQueryRef.current, nextQuery)) {
@@ -508,19 +533,26 @@ export function ProductCatalogContainer() {
                 {activeFilterCount > 0 ? `Filters · ${activeFilterCount}` : 'Filters'}
               </Button>
               {filterDraftDirty ? <span className="hint">Unsaved filters</span> : null}
-              <div className="bulk-actions-menu-wrap">
+              <div ref={bulkActionsMenuWrapRef} className="bulk-actions-menu-wrap">
                 <Button
+                  id="bulk-actions-menu-button"
                   variant="secondary"
                   onClick={() => setBulkActionsOpen((open) => !open)}
                   disabled={bulkActionsDisabled}
                   loading={bulkActionsLoading}
+                  aria-haspopup="menu"
                   aria-expanded={bulkActionsOpen}
                   aria-controls="bulk-actions-menu"
                 >
                   Bulk actions
                 </Button>
                 {bulkActionsOpen ? (
-                  <div id="bulk-actions-menu" className="bulk-actions-menu" role="menu">
+                  <div
+                    id="bulk-actions-menu"
+                    className="bulk-actions-menu"
+                    role="menu"
+                    aria-labelledby="bulk-actions-menu-button"
+                  >
                     <button
                       type="button"
                       role="menuitem"

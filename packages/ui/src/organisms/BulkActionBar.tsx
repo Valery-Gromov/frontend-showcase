@@ -46,14 +46,14 @@ export function BulkActionBar({
   const barDisabled = disabled || mode === 'none';
 
   return (
-    <div className={styles.bar}>
+    <div className={styles.bar} role="region" aria-label="Bulk selection and actions">
       <BulkSelectionSummary
         mode={mode}
         selectedCount={selectedCount}
         totalKnown={totalKnown}
         onClear={onClearSelection}
       />
-      <div className={styles.actions}>
+      <div className={styles.actions} role="group" aria-label="Bulk action controls">
         {toolbarActions}
         {actions.map((action) => {
           const isDisabled = barDisabled || Boolean(action.disabled);

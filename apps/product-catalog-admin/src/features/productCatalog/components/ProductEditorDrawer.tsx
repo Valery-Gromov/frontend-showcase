@@ -1,3 +1,4 @@
+import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { ProductForm } from './ProductForm';
 import type { ProductFormErrors, ProductFormValue, ProductMutationState } from '../model/types';
 import type { SelectOption } from '@frontend-showcase/ui';
@@ -34,14 +35,82 @@ export function ProductEditorDrawer({
   onSubmit,
   onCancel,
 }: ProductEditorDrawerProps) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    window.setTimeout(() => {
+      const panel = panelRef.current;
+      const firstFocusable = panel?.querySelector<HTMLElement>(
+        'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+      );
+      (firstFocusable ?? panel)?.focus();
+    }, 0);
+
+    return () => {
+      previousFocusRef.current?.focus();
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const saving = mutationState.status === 'saving';
   const title = mode === 'edit' ? 'Edit product' : 'Add product';
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      onCancel();
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const focusable = Array.from(
+      panel.querySelectorAll<HTMLElement>(
+        'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+      ),
+    );
+
+    if (focusable.length === 0) {
+      event.preventDefault();
+      panel.focus();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (!first || !last) return;
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+      return;
+    }
+
+    if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   return (
-    <aside className="drawer" aria-labelledby="product-editor-title">
-      <div className="drawer-panel">
+    <aside
+      className="drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="product-editor-title"
+      onKeyDown={handleKeyDown}
+    >
+      <div ref={panelRef} className="drawer-panel" tabIndex={-1}>
         <div className="drawer-header">
           <div>
             <h2 id="product-editor-title">{title}</h2>
