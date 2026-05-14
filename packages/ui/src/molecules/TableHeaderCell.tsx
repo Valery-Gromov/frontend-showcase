@@ -1,4 +1,5 @@
 import { Tooltip } from '../atoms/Tooltip';
+import styles from './TableHeaderCell.module.css';
 
 export type SortDirection = 'asc' | 'desc' | null;
 
@@ -28,19 +29,14 @@ export function TableHeaderCell({
       type="button"
       onClick={sortable ? onSort : undefined}
       disabled={!sortable}
-      style={{
-        border: 'none',
-        background: 'transparent',
-        padding: 0,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        cursor: sortable ? 'pointer' : 'default',
-        fontWeight: 600,
-      }}
+      className={styles.button}
     >
       <span>{label}</span>
-      {sortable ? <span aria-hidden>{getSortIcon(sortDirection)}</span> : null}
+      {sortable ? (
+        <span aria-hidden className={styles.sortIcon}>
+          {getSortIcon(sortDirection)}
+        </span>
+      ) : null}
     </button>
   );
 

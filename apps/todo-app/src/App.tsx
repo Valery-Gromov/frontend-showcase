@@ -12,6 +12,7 @@ import {
   Tooltip,
   type SelectOption,
 } from '@frontend-showcase/ui';
+import { ThemeToggle } from './ThemeToggle';
 
 type TodoStatus = 'todo' | 'done';
 type FilterStatus = 'all' | TodoStatus;
@@ -103,7 +104,10 @@ export function App() {
       <div className="container">
         <header className="header">
           <h1>Todo test app</h1>
-          <Badge variant="info">{todos.length} total</Badge>
+          <div className="row row-center">
+            <Badge variant="info">{todos.length} total</Badge>
+            <ThemeToggle />
+          </div>
         </header>
 
         <section className="panel">

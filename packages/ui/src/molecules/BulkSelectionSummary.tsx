@@ -1,4 +1,5 @@
 import { Button } from '../atoms/Button';
+import styles from './BulkSelectionSummary.module.css';
 
 export type BulkSelectionMode = 'none' | 'page' | 'allMatching';
 
@@ -23,7 +24,7 @@ export function BulkSelectionSummary({
   onClear,
 }: BulkSelectionSummaryProps) {
   return (
-    <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+    <div className={styles.summary}>
       <span>{getSummaryText(mode, selectedCount, totalKnown)}</span>
       {mode !== 'none' ? (
         <Button variant="ghost" onClick={onClear}>

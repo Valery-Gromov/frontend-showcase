@@ -3,6 +3,7 @@ import { Tooltip } from '../atoms/Tooltip';
 import { BulkSelectionSummary } from '../molecules/BulkSelectionSummary';
 import { type SelectionState } from './DataTable';
 import type { ReactNode } from 'react';
+import styles from './BulkActionBar.module.css';
 
 export type BulkActionItem = {
   id: string;
@@ -45,25 +46,14 @@ export function BulkActionBar({
   const barDisabled = disabled || mode === 'none';
 
   return (
-    <div
-      style={{
-        border: '1px solid #e5e7eb',
-        borderRadius: 10,
-        padding: 12,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 12,
-        flexWrap: 'wrap',
-      }}
-    >
+    <div className={styles.bar}>
       <BulkSelectionSummary
         mode={mode}
         selectedCount={selectedCount}
         totalKnown={totalKnown}
         onClear={onClearSelection}
       />
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div className={styles.actions}>
         {toolbarActions}
         {actions.map((action) => {
           const isDisabled = barDisabled || Boolean(action.disabled);

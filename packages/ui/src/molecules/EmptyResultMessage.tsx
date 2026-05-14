@@ -1,4 +1,5 @@
 import { Button } from '../atoms/Button';
+import styles from './EmptyResultMessage.module.css';
 
 export type EmptyResultMessageProps = {
   title: string;
@@ -14,21 +15,12 @@ export function EmptyResultMessage({
   onAction,
 }: EmptyResultMessageProps) {
   return (
-    <div
-      style={{
-        border: '1px dashed #d1d5db',
-        borderRadius: 10,
-        padding: 16,
-        display: 'grid',
-        gap: 8,
-        justifyItems: 'start',
-      }}
-    >
-      <span aria-hidden style={{ fontSize: 20 }}>
+    <div className={styles.message}>
+      <span aria-hidden className={styles.icon}>
         🔍
       </span>
       <strong>{title}</strong>
-      {description ? <span style={{ color: '#6b7280' }}>{description}</span> : null}
+      {description ? <span className={styles.description}>{description}</span> : null}
       {actionLabel && onAction ? (
         <Button variant="secondary" onClick={onAction}>
           {actionLabel}

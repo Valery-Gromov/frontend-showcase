@@ -1,4 +1,5 @@
 import { Badge, Button } from '@frontend-showcase/ui';
+import { ThemeToggle } from '../../../app/ThemeToggle';
 import type { TableLoadState } from '../model/types';
 
 type ProductCatalogHeaderProps = {
@@ -30,6 +31,7 @@ export function ProductCatalogHeader({
         <Badge variant={isRefreshing ? 'warning' : 'neutral'}>
           {isRefreshing ? 'Refreshing...' : `Updated: ${lastUpdatedAt || '-'}`}
         </Badge>
+        <ThemeToggle />
       </div>
     </header>
   );

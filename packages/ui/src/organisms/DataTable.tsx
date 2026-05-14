@@ -1,7 +1,9 @@
+import type { CSSProperties } from 'react';
 import { Checkbox } from '../atoms/Checkbox';
 import { EmptyResultMessage } from '../molecules/EmptyResultMessage';
 import { RowCheckboxCell } from '../molecules/RowCheckboxCell';
 import { TableHeaderCell } from '../molecules/TableHeaderCell';
+import styles from './DataTable.module.css';
 
 export type SelectionState =
   | { mode: 'none' }
@@ -84,14 +86,15 @@ export function DataTable<T>({
   onRetry,
 }: DataTableProps<T>) {
   const headerSelection = getHeaderCheckboxState(pageRowIds, selection);
+  const colSpan = columns.length + (selectable ? 1 : 0) + (renderRowActions ? 1 : 0);
 
   return (
-    <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead style={{ background: '#f9fafb' }}>
-          <tr>
+    <div className={styles.frame}>
+      <table className={styles.table}>
+        <thead>
+          <tr className={styles.headerRow}>
             {selectable ? (
-              <th style={{ width: 40, textAlign: 'center', padding: 8 }}>
+              <th className={styles.selectionCell}>
                 <Checkbox
                   checked={headerSelection.checked}
                   indeterminate={headerSelection.indeterminate}
@@ -100,7 +103,10 @@ export function DataTable<T>({
                       onSelectionChange({ mode: 'some', ids: Array.from(new Set(pageRowIds)) });
                     } else {
                       if (selection.mode === 'allMatching') {
-                        onSelectionChange({ ...selection, excludedIds: Array.from(new Set([...selection.excludedIds, ...pageRowIds])) });
+                        onSelectionChange({
+                          ...selection,
+                          excludedIds: Array.from(new Set([...selection.excludedIds, ...pageRowIds])),
+                        });
                         return;
                       }
                       onSelectionChange({ mode: 'none' });
@@ -113,15 +119,14 @@ export function DataTable<T>({
               const currentField = column.sortField ?? column.key;
               const isSorted = sort?.field === currentField;
               const sortDirection = isSorted ? sort?.direction ?? null : null;
+              const widthStyle: CSSProperties | undefined =
+                column.width !== undefined ? { width: column.width } : undefined;
               return (
                 <th
                   key={column.key}
-                  style={{
-                    textAlign: column.align ?? 'left',
-                    padding: 8,
-                    borderBottom: '1px solid #e5e7eb',
-                    width: column.width,
-                  }}
+                  className={styles.headerCell}
+                  data-align={column.align ?? 'left'}
+                  style={widthStyle}
                 >
                   <TableHeaderCell
                     label={column.label}
@@ -144,16 +149,13 @@ export function DataTable<T>({
                 </th>
               );
             })}
-            {renderRowActions ? <th style={{ width: 80, padding: 8 }}>Actions</th> : null}
+            {renderRowActions ? <th className={styles.actionsCell}>Actions</th> : null}
           </tr>
         </thead>
         <tbody>
           {loadState === 'loading' ? (
             <tr>
-              <td
-                colSpan={columns.length + (selectable ? 1 : 0) + (renderRowActions ? 1 : 0)}
-                style={{ padding: 16 }}
-              >
+              <td colSpan={colSpan} className={styles.statusCell}>
                 Loading...
               </td>
             </tr>
@@ -161,10 +163,7 @@ export function DataTable<T>({
 
           {loadState === 'error' ? (
             <tr>
-              <td
-                colSpan={columns.length + (selectable ? 1 : 0) + (renderRowActions ? 1 : 0)}
-                style={{ padding: 16 }}
-              >
+              <td colSpan={colSpan} className={styles.statusCell}>
                 <EmptyResultMessage
                   title={errorTitle}
                   description={errorDescription}
@@ -177,10 +176,7 @@ export function DataTable<T>({
 
           {(loadState === 'success' || loadState === 'refreshing' || loadState === 'idle') && rows.length === 0 ? (
             <tr>
-              <td
-                colSpan={columns.length + (selectable ? 1 : 0) + (renderRowActions ? 1 : 0)}
-                style={{ padding: 16 }}
-              >
+              <td colSpan={colSpan} className={styles.statusCell}>
                 <EmptyResultMessage title={emptyTitle} description={emptyDescription} />
               </td>
             </tr>
@@ -191,9 +187,9 @@ export function DataTable<T>({
               const meta = getRowMeta(row);
               const selected = isRowSelected(meta.id, selection);
               return (
-                <tr key={meta.id} style={{ opacity: meta.disabled ? 0.6 : 1 }}>
+                <tr key={meta.id} className={styles.bodyRow} data-disabled={meta.disabled}>
                   {selectable ? (
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f4f6' }}>
+                    <td className={styles.cell}>
                       <RowCheckboxCell
                         checked={selected}
                         disabled={Boolean(meta.disabled)}
@@ -209,7 +205,11 @@ export function DataTable<T>({
                           const selectedIds = new Set(selection.mode === 'some' ? selection.ids : []);
                           if (checked) selectedIds.add(meta.id);
                           else selectedIds.delete(meta.id);
-                          onSelectionChange(selectedIds.size ? { mode: 'some', ids: Array.from(selectedIds) } : { mode: 'none' });
+                          onSelectionChange(
+                            selectedIds.size
+                              ? { mode: 'some', ids: Array.from(selectedIds) }
+                              : { mode: 'none' },
+                          );
                         }}
                       />
                     </td>
@@ -217,18 +217,14 @@ export function DataTable<T>({
                   {columns.map((column) => (
                     <td
                       key={column.key}
-                      style={{
-                        padding: 8,
-                        borderBottom: '1px solid #f3f4f6',
-                        textAlign: column.align ?? 'left',
-                        verticalAlign: 'top',
-                      }}
+                      className={styles.cell}
+                      data-align={column.align ?? 'left'}
                     >
                       {column.renderCell(row)}
                     </td>
                   ))}
                   {renderRowActions ? (
-                    <td style={{ padding: 8, borderBottom: '1px solid #f3f4f6' }}>{renderRowActions(row)}</td>
+                    <td className={styles.cell}>{renderRowActions(row)}</td>
                   ) : null}
                 </tr>
               );
@@ -236,7 +232,7 @@ export function DataTable<T>({
         </tbody>
       </table>
       {loadState === 'refreshing' ? (
-        <div style={{ padding: 8, fontSize: 12, color: '#6b7280' }}>Refreshing data...</div>
+        <div className={styles.refreshingHint}>Refreshing data...</div>
       ) : null}
     </div>
   );

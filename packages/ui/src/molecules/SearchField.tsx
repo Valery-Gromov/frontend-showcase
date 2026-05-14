@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { IconButton } from '../atoms/IconButton';
 import { TextInput } from '../atoms/TextInput';
+import styles from './SearchField.module.css';
 
 export type SearchFieldProps = {
   value: string;
@@ -40,13 +41,14 @@ export function SearchField({
   }, [debounceMs, draftValue, onChange]);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+    <div className={styles.searchField}>
       <TextInput
         value={draftValue}
         onValueChange={setDraftValue}
         placeholder={placeholder}
         pending={loading}
         clearable
+        className={styles.input}
         onClear={() => {
           if (onClear) onClear();
           setDraftValue('');

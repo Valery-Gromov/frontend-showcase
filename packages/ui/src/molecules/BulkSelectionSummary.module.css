@@ -1,0 +1,7 @@
+.summary {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+  color: var(--color-on-surface);
+}

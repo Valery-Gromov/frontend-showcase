@@ -1,0 +1,22 @@
+.button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--color-on-surface);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+}
+
+.button:disabled {
+  cursor: default;
+  color: var(--color-on-surface);
+}
+
+.sortIcon {
+  color: var(--color-on-surface-variant);
+}

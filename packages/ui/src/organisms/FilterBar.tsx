@@ -2,6 +2,7 @@ import { Button } from '../atoms/Button';
 import { type SelectOption } from '../atoms/Select';
 import { FilterSelect } from '../molecules/FilterSelect';
 import { SearchField } from '../molecules/SearchField';
+import styles from './FilterBar.module.css';
 
 export type FilterBarQuery = {
   brand: string[];
@@ -46,16 +47,8 @@ export function FilterBar({
   const applyVisible = mode === 'manual';
 
   return (
-    <div
-      style={{
-        border: '1px solid #e5e7eb',
-        borderRadius: 10,
-        padding: 12,
-        display: 'grid',
-        gap: 10,
-      }}
-    >
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: 8 }}>
+    <div className={styles.bar}>
+      <div className={styles.fields}>
         <SearchField
           value={value.search}
           loading={loading}
@@ -100,7 +93,7 @@ export function FilterBar({
         />
       </div>
 
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+      <div className={styles.actions}>
         <Button variant="secondary" onClick={onReset} disabled={disabled || loading}>
           Reset
         </Button>

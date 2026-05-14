@@ -1,5 +1,6 @@
 import { Chip } from '../atoms/Chip';
 import { IconButton } from '../atoms/IconButton';
+import styles from './ActiveFilterChip.module.css';
 
 export type ActiveFilterChipProps = {
   label: string;
@@ -10,7 +11,7 @@ export type ActiveFilterChipProps = {
 export function ActiveFilterChip({ label, valueLabel, onRemove }: ActiveFilterChipProps) {
   return (
     <Chip>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <span className={styles.content}>
         <span>{`${label}: ${valueLabel}`}</span>
         <IconButton icon="x" label={`Remove ${label} filter`} onClick={onRemove} />
       </span>
