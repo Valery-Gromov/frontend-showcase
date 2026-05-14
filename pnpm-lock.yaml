@@ -51,6 +51,9 @@ importers:
 
   apps/todo-app:
     dependencies:
+      '@frontend-showcase/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@frontend-showcase/ui':
         specifier: workspace:*
         version: link:../../packages/ui

@@ -19,3 +19,11 @@ export * from './molecules/EmptyResultMessage';
 export * from './organisms/DataTable';
 export * from './organisms/FilterBar';
 export * from './organisms/BulkActionBar';
+export { ThemeProvider, useTheme, type ThemeProviderProps } from './theme/ThemeProvider';
+export type {
+  ThemeMode,
+  ResolvedTheme,
+  Density,
+  ThemeStorageAdapter,
+  ThemeContextValue,
+} from './theme/types';

@@ -13,6 +13,7 @@
     "dependencies": {
         "react": "^18.0.0",
         "react-dom": "^18.0.0",
+        "@frontend-showcase/sdk": "workspace:*",
         "@frontend-showcase/ui": "workspace:*"
     },
     "devDependencies": {
