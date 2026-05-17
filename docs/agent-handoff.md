@@ -37,6 +37,18 @@ pnpm --filter @frontend-showcase/log-viewer build
 
 ## Recent Agent Entries
 
+### 2026-05-17 — Data Hub app case-study docs
+
+- Scope profile: app.
+- Changed: added `apps/data-hub/engineering-brief.md` and rewrote
+  `apps/data-hub/README.md` as a shorter hiring-manager entry point.
+- Changed: updated `docs/reuse-candidates.md` with Data Hub reuse candidates from the audit:
+  query-key/optimistic-mutation convention, theme toggle control, stale-snapshot mock scenario, and
+  dashboard panel/KPI primitives.
+- Purpose: document `data-hub` as a standalone showcase case study without changing app code.
+- Verification: not run; documentation-only change pending user-requested verification.
+- Commit: `docs(data-hub): add engineering brief and app readme`.
+
 ### 2026-05-15 — Product catalog all-matching pagination fix
 
 - Scope profile: app.
