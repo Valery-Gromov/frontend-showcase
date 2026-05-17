@@ -37,6 +37,21 @@ pnpm --filter @frontend-showcase/log-viewer build
 
 ## Recent Agent Entries
 
+### 2026-05-17 — Data Hub local cleanup and tests
+
+- Scope profile: app.
+- Changed: split Data Hub dashboard helpers into local feature components/formatters without
+  creating shared abstractions.
+- Changed: surfaced filter-options load errors, made stockout KPI delta semantics lower-is-better,
+  disabled revenue-target decrement before the server minimum, and scoped analytics mock state per
+  route factory.
+- Changed: added app-local Vitest coverage for analytics mock filters, stale-snapshot cadence, and
+  revenue-target minimum validation, plus focused component regressions for KPI direction and target
+  decrement disabling.
+- Verification: `pnpm --filter @frontend-showcase/data-hub typecheck`, `pnpm --filter
+  @frontend-showcase/data-hub test`, `pnpm --filter @frontend-showcase/data-hub build`, and
+  `pnpm hygiene` passed.
+
 ### 2026-05-17 — Data Hub app case-study docs
 
 - Scope profile: app.

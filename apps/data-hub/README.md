@@ -44,10 +44,11 @@ For the full rationale, read [`engineering-brief.md`](engineering-brief.md). For
 ```bash
 pnpm --filter @frontend-showcase/data-hub dev
 pnpm --filter @frontend-showcase/data-hub typecheck
+pnpm --filter @frontend-showcase/data-hub test
 pnpm --filter @frontend-showcase/data-hub build
 ```
 
-There are no app-local tests yet. Current automated coverage for the underlying contracts lives in `packages/sdk`, `packages/hooks`, and `packages/mock-network`.
+App-local tests cover analytics mock route behavior and focused component regressions. Shared contract coverage also lives in `packages/sdk`, `packages/hooks`, and `packages/mock-network`.
 
 ## Trade-offs
 
