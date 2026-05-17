@@ -14,9 +14,6 @@ const MESSAGES = [
   'background compaction finished',
 ] as const;
 
-let highWatermark = 0;
-const logsDb: LogEntry[] = [];
-
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -47,21 +44,24 @@ function createLog(sequence: number, timestamp: Date): LogEntry {
   };
 }
 
-function seedLogs(): void {
-  if (logsDb.length > 0) return;
+function seedLogs(logsDb: LogEntry[]): number {
+  let highWatermark = 0;
   const start = Date.now() - 1000 * 60 * 45;
   for (let index = 0; index < 1200; index += 1) {
     highWatermark += 1;
     logsDb.push(createLog(highWatermark, new Date(start + index * 2200)));
   }
+  return highWatermark;
 }
 
-function appendLiveLogs(): void {
+function appendLiveLogs(logsDb: LogEntry[], highWatermark: number): number {
+  let nextHighWatermark = highWatermark;
   const count = randomInt(1, 6);
   for (let index = 0; index < count; index += 1) {
-    highWatermark += 1;
-    logsDb.push(createLog(highWatermark, new Date(Date.now() + index * 120)));
+    nextHighWatermark += 1;
+    logsDb.push(createLog(nextHighWatermark, new Date(Date.now() + index * 120)));
   }
+  return nextHighWatermark;
 }
 
 function encodeCursor(sequence: number): string {
@@ -94,7 +94,15 @@ function queryFromSearchParams(query: URLSearchParams): FetchLogsParams {
   };
 }
 
-function fetchLogs(params: FetchLogsParams): FetchLogsResult {
+function highWatermarkForLevel(logsDb: LogEntry[], level: LogLevelFilter): number {
+  for (let index = logsDb.length - 1; index >= 0; index -= 1) {
+    const log = logsDb[index];
+    if (log && matchesLevel(log, level)) return log.sequence;
+  }
+  return 0;
+}
+
+function fetchLogs(logsDb: LogEntry[], params: FetchLogsParams): FetchLogsResult {
   const afterSequence = decodeCursor(params.cursor);
   const items = logsDb
     .filter((log) => log.sequence > afterSequence && matchesLevel(log, params.level))
@@ -104,25 +112,22 @@ function fetchLogs(params: FetchLogsParams): FetchLogsResult {
   return {
     items,
     nextCursor: last ? encodeCursor(last.sequence) : params.cursor,
-    serverHighWatermark: highWatermark,
+    serverHighWatermark: highWatermarkForLevel(logsDb, params.level),
   };
 }
 
 export function createLogMockRoutes(): MockRoute[] {
-  seedLogs();
+  const logsDb: LogEntry[] = [];
+  let highWatermark = seedLogs(logsDb);
+
   return [
     {
       method: 'GET',
       pattern: '/api/logs',
       handler: ({ query }) => {
-        appendLiveLogs();
-        return { status: 200, body: fetchLogs(queryFromSearchParams(query)) };
+        highWatermark = appendLiveLogs(logsDb, highWatermark);
+        return { status: 200, body: fetchLogs(logsDb, queryFromSearchParams(query)) };
       },
     },
   ];
 }
-
-export const logLevelOptions = [
-  { value: 'all', label: 'All levels' },
-  ...LEVELS.map((level) => ({ value: level, label: level })),
-];

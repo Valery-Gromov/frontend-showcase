@@ -47,7 +47,19 @@ pnpm --filter @frontend-showcase/log-viewer build
   and API error translation convention.
 - Purpose: document `log-viewer` as a standalone showcase case study without changing app code.
 - Verification: not run; documentation-only change pending user-requested verification.
-- Commit: pending.
+- Commit: `3e94100 docs(log-viewer): add engineering brief and app readme`.
+
+### 2026-05-17 — Log Viewer local cleanup and tests
+
+- Scope profile: app.
+- Changed: added app-local tests for stream merge/follow helpers and mock cursor route behavior.
+- Changed: removed unused cursor state and unused mock-server level-options export.
+- Changed: scoped log mock backend state per route factory and made `serverHighWatermark` reflect the
+  active level filter so the behind count is query-scoped.
+- Verification: `pnpm --filter @frontend-showcase/log-viewer test`, `pnpm --filter
+  @frontend-showcase/log-viewer typecheck`, `pnpm --filter @frontend-showcase/log-viewer build`,
+  and `pnpm hygiene` passed.
+- Commit: `fix(log-viewer): add local stream tests and cleanup`.
 
 ### 2026-05-17 — Data Hub local cleanup and tests
 

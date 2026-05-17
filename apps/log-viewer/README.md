@@ -44,10 +44,11 @@ For the full rationale, see [`engineering-brief.md`](engineering-brief.md). For 
 ```bash
 pnpm --filter @frontend-showcase/log-viewer dev
 pnpm --filter @frontend-showcase/log-viewer typecheck
+pnpm --filter @frontend-showcase/log-viewer test
 pnpm --filter @frontend-showcase/log-viewer build
 ```
 
-There are no app-local tests yet. The current verification surface is typecheck/build plus shared package tests for SDK, hooks, and mock-network behavior.
+App-local tests cover stream merge/follow helpers and mock cursor route behavior.
 
 ## Trade-offs
 

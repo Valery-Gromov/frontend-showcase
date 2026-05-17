@@ -4,11 +4,11 @@ import { useRequestSequence } from '@frontend-showcase/hooks';
 import { Badge, Button, Select, Skeleton } from '@frontend-showcase/ui';
 import { ThemeToggle } from '../../app/ThemeToggle';
 import { fetchLogs } from './api/logApi';
+import { isNearBottom, mergeLogs } from './model/streamState';
 import type { FetchLogsResult, LogEntry, LogLevelFilter } from './model/types';
 import styles from './LogViewer.module.css';
 
 const PAGE_SIZE = 200;
-const FOLLOW_THRESHOLD_PX = 96;
 
 const levelOptions = [
   { value: 'all', label: 'All levels' },
@@ -23,17 +23,6 @@ function formatTime(value: string): string {
     minute: '2-digit',
     second: '2-digit',
   }).format(new Date(value));
-}
-
-function mergeLogs(current: LogEntry[], next: LogEntry[]): LogEntry[] {
-  if (next.length === 0) return current;
-  const byId = new Map(current.map((log) => [log.id, log]));
-  for (const log of next) byId.set(log.id, log);
-  return Array.from(byId.values()).sort((a, b) => a.sequence - b.sequence);
-}
-
-function isNearBottom(element: HTMLElement): boolean {
-  return element.scrollHeight - element.scrollTop - element.clientHeight < FOLLOW_THRESHOLD_PX;
 }
 
 function DetailPanel({ pinned }: { pinned: LogEntry | null }) {
@@ -84,7 +73,6 @@ export function LogViewer() {
   const levelRef = useRef<LogLevelFilter>('all');
   const [level, setLevel] = useState<LogLevelFilter>('all');
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
   const [serverHighWatermark, setServerHighWatermark] = useState(0);
   const [loadState, setLoadState] = useState<'loading' | 'refreshing' | 'success' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
@@ -106,7 +94,6 @@ export function LogViewer() {
   const commitResult = useCallback((result: FetchLogsResult, reset: boolean) => {
     setLogs((current) => (reset ? result.items : mergeLogs(current, result.items)));
     cursorRef.current = result.nextCursor;
-    setCursor(result.nextCursor);
     setServerHighWatermark(result.serverHighWatermark);
   }, []);
 
@@ -143,7 +130,6 @@ export function LogViewer() {
     cursorRef.current = null;
     loadingRef.current = false;
     setLogs([]);
-    setCursor(null);
     setPinnedId(null);
     setIsFollowing(true);
     void loadPage(true);

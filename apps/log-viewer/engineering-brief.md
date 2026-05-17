@@ -25,6 +25,7 @@ The user is an engineer or operator investigating live service activity. In a fi
 - The stream is append-only for the demo. New rows are appended on every mock route hit.
 - The total count is unknown and intentionally not displayed as a page count.
 - Cursor position is sequence-based, so the client can fetch rows after the last loaded sequence without offset drift when newer rows arrive.
+- `serverHighWatermark` is scoped to the current level filter so the behind count reflects the visible query.
 - The client deduplicates fetched rows by `id` and sorts by `sequence` before committing merged results.
 - The loaded list grows in memory during a session, while the rendered DOM stays bounded by `@tanstack/react-virtual`.
 
@@ -109,7 +110,7 @@ The user is an engineer or operator investigating live service activity. In a fi
 
 - A11y: controls are labeled, status text uses `aria-live`, the pinned detail pane has an accessible label, and row buttons are keyboard-focusable.
 - Performance: virtualization bounds rendered row count, cursor pagination avoids total-count work, and manual chunking separates the virtualizer in the production build.
-- Testability: cursor parsing, log merge/dedupe, follow threshold, and mock route behavior can be tested as pure or route-level logic if split from the component.
+- Testability: stream merge/dedupe, follow threshold, and mock route behavior are covered by app-local tests; cursor parsing remains isolated inside the app mock route.
 - Maintainability: API, mock server, types, and UI stay within `features/logs`; shared packages remain app-agnostic.
 - No hidden state: stream state is visible in the component, backend simulation is isolated in `mockServer.ts`, and typed storage only owns theme preference.
 - No unnecessary dependencies: the app uses a proven virtualizer and does not add a data-cache library or grid framework for a single scroll stream.
@@ -129,6 +130,7 @@ The user is an engineer or operator investigating live service activity. In a fi
 
 - The app loads logs through SDK-backed API functions and mock-network routes.
 - The API uses cursor pagination and returns `nextCursor` plus `serverHighWatermark`.
+- The behind count is based on the current level filter, not unrelated hidden log levels.
 - The viewer renders rows through `@tanstack/react-virtual` instead of one DOM node per loaded row.
 - Newer rows can be fetched manually and by live-tail polling while follow mode is active.
 - Scrolling away from the bottom pauses auto-follow, and "Jump to now" resumes it.
