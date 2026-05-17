@@ -37,6 +37,18 @@ pnpm --filter @frontend-showcase/log-viewer build
 
 ## Recent Agent Entries
 
+### 2026-05-17 — Log Viewer app case-study docs
+
+- Scope profile: app.
+- Changed: added `apps/log-viewer/engineering-brief.md` and rewrote
+  `apps/log-viewer/README.md` as a shorter hiring-manager entry point.
+- Changed: updated `docs/reuse-candidates.md` with Log Viewer reuse candidates from the audit:
+  cursor stream/follow orchestration, append-only cursor mock scenario, virtualized inspector layout,
+  and API error translation convention.
+- Purpose: document `log-viewer` as a standalone showcase case study without changing app code.
+- Verification: not run; documentation-only change pending user-requested verification.
+- Commit: pending.
+
 ### 2026-05-17 — Data Hub local cleanup and tests
 
 - Scope profile: app.
