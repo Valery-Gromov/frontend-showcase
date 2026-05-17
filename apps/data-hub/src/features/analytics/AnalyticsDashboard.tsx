@@ -1,17 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { useDebouncedValue } from '@frontend-showcase/hooks';
-import { Badge, Button, Select, Skeleton } from '@frontend-showcase/ui';
+import { Badge, Button, Select } from '@frontend-showcase/ui';
 import { ThemeToggle } from '../../app/ThemeToggle';
 import {
   analyticsQueryKeys,
@@ -20,12 +10,12 @@ import {
   fetchRevenueTarget,
   updateRevenueTarget,
 } from './api/analyticsApi';
-import type {
-  AnalyticsDashboardResponse,
-  AnalyticsFilters,
-  KpiValue,
-  RevenueTarget,
-} from './model/types';
+import { Breakdown } from './components/Breakdown';
+import { KpiCard } from './components/KpiCard';
+import { RevenueChart } from './components/RevenueChart';
+import { TargetPanel } from './components/TargetPanel';
+import { formatDateTime } from './formatters';
+import type { AnalyticsFilters, RevenueTarget } from './model/types';
 import styles from './AnalyticsDashboard.module.css';
 
 const DEFAULT_FILTERS: AnalyticsFilters = {
@@ -33,170 +23,6 @@ const DEFAULT_FILTERS: AnalyticsFilters = {
   brand: 'all',
   category: 'all',
 };
-
-const currency = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-});
-
-const compactNumber = new Intl.NumberFormat('en-US', {
-  notation: 'compact',
-  maximumFractionDigits: 1,
-});
-
-function formatValue(kind: 'money' | 'number' | 'percent', value: number): string {
-  if (kind === 'money') return currency.format(value);
-  if (kind === 'percent') return `${value.toFixed(2)}%`;
-  return compactNumber.format(value);
-}
-
-function formatDateTime(value?: string): string {
-  if (!value) return 'No snapshot yet';
-  return new Intl.DateTimeFormat('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(new Date(value));
-}
-
-function KpiCard({
-  label,
-  metric,
-  kind,
-  loading,
-}: {
-  label: string;
-  metric?: KpiValue;
-  kind: 'money' | 'number' | 'percent';
-  loading: boolean;
-}) {
-  const variant = metric && metric.delta < 0 ? 'warning' : 'success';
-  return (
-    <article className={styles.kpiCard}>
-      <span className={styles.kpiLabel}>{label}</span>
-      {loading || !metric ? (
-        <Skeleton variant="text" height={32} />
-      ) : (
-        <>
-          <strong className={styles.kpiValue}>{formatValue(kind, metric.value)}</strong>
-          <Badge variant={variant}>{metric.delta > 0 ? '+' : ''}{metric.delta}% vs previous</Badge>
-        </>
-      )}
-    </article>
-  );
-}
-
-function RevenueChart({ data }: { data?: AnalyticsDashboardResponse }) {
-  if (!data) {
-    return <Skeleton variant="rectangle" height="100%" />;
-  }
-
-  return (
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data.series} margin={{ top: 10, right: 22, bottom: 0, left: 4 }}>
-        <CartesianGrid stroke="var(--color-outline-variant)" vertical={false} />
-        <XAxis
-          dataKey="date"
-          tickLine={false}
-          axisLine={{ stroke: 'var(--color-outline)' }}
-          tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }}
-          minTickGap={28}
-        />
-        <YAxis
-          tickFormatter={(value) => compactNumber.format(Number(value))}
-          tickLine={false}
-          axisLine={{ stroke: 'var(--color-outline)' }}
-          tick={{ fill: 'var(--color-on-surface-variant)', fontSize: 12 }}
-          width={54}
-        />
-        <Tooltip formatter={(value) => currency.format(Number(value))} />
-        <Legend />
-        <Line
-          type="monotone"
-          dataKey="revenue"
-          name="Revenue"
-          stroke="var(--color-primary)"
-          strokeWidth={2}
-          dot={false}
-          activeDot={{ r: 4 }}
-        />
-      </LineChart>
-    </ResponsiveContainer>
-  );
-}
-
-function Breakdown({ data }: { data?: AnalyticsDashboardResponse }) {
-  if (!data) {
-    return (
-      <div className={styles.breakdownList}>
-        <Skeleton variant="text" height={22} />
-        <Skeleton variant="text" height={22} />
-        <Skeleton variant="text" height={22} />
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.breakdownList}>
-      {data.breakdown.map((item) => (
-        <div className={styles.breakdownItem} key={item.label}>
-          <div className={styles.breakdownTopline}>
-            <span>{item.label}</span>
-            <span>{currency.format(item.revenue)} · {item.share}%</span>
-          </div>
-          <div className={styles.meter} aria-hidden>
-            <div className={styles.meterFill} style={{ width: `${item.share}%` }} />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function TargetPanel({
-  target,
-  currentRevenue,
-  saving,
-  error,
-  onChange,
-}: {
-  target?: RevenueTarget;
-  currentRevenue?: number;
-  saving: boolean;
-  error?: string;
-  onChange: (value: number) => void;
-}) {
-  const value = target?.value ?? 1_250_000;
-  const progress = currentRevenue ? Math.min(100, Math.round((currentRevenue / value) * 100)) : 0;
-
-  return (
-    <section className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <div>
-          <h2 className={styles.panelTitle}>Revenue target</h2>
-          <p className={styles.panelSubtitle}>Optimistic mutation with rollback on server conflict</p>
-        </div>
-      </div>
-      <div className={styles.targetBody}>
-        <div className={styles.targetValue}>{currency.format(value)}</div>
-        <div className={styles.meter} aria-label={`Current revenue reached ${progress}% of target`}>
-          <div className={styles.meterFill} style={{ width: `${progress}%` }} />
-        </div>
-        <span className={styles.muted}>Updated {formatDateTime(target?.updatedAt)}</span>
-        {error ? <span className={styles.error}>{error}</span> : null}
-        <div className={styles.targetActions}>
-          <Button variant="secondary" loading={saving} onClick={() => onChange(value - 50_000)}>
-            -50k
-          </Button>
-          <Button variant="secondary" loading={saving} onClick={() => onChange(value + 50_000)}>
-            +50k
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export function AnalyticsDashboard() {
   const [filters, setFilters] = useState<AnalyticsFilters>(DEFAULT_FILTERS);
@@ -249,6 +75,7 @@ export function AnalyticsDashboard() {
     : `Snapshot ${formatDateTime(dashboard?.snapshotAt)}`;
   const targetError = targetMutation.error instanceof Error ? targetMutation.error.message : undefined;
   const loadError = dashboardQuery.error instanceof Error ? dashboardQuery.error.message : undefined;
+  const optionsError = optionsQuery.error instanceof Error ? optionsQuery.error.message : undefined;
 
   const chartSubtitle = useMemo(() => {
     const brand = filters.brand === 'all' ? 'all brands' : filters.brand;
@@ -304,6 +131,11 @@ export function AnalyticsDashboard() {
           Refresh
         </Button>
       </section>
+      {optionsError ? (
+        <div className={styles.statusRow} aria-live="polite">
+          <span className={styles.error}>{optionsError}</span>
+        </div>
+      ) : null}
 
       <div className={styles.statusRow} aria-live="polite">
         <Badge variant={dashboard?.stale ? 'warning' : 'info'}>
@@ -322,7 +154,13 @@ export function AnalyticsDashboard() {
           kind="percent"
           loading={dashboardQuery.isLoading}
         />
-        <KpiCard label="Stockouts" metric={dashboard?.kpis.stockouts} kind="number" loading={dashboardQuery.isLoading} />
+        <KpiCard
+          label="Stockouts"
+          metric={dashboard?.kpis.stockouts}
+          kind="number"
+          loading={dashboardQuery.isLoading}
+          direction="lower-is-better"
+        />
       </section>
 
       <div className={styles.contentGrid}>

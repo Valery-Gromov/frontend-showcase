@@ -17,12 +17,6 @@ const RANGE_DAYS: Record<DateRangePreset, number> = {
   '90d': 90,
 };
 
-let requestCount = 0;
-let revenueTarget: RevenueTarget = {
-  value: 1_250_000,
-  updatedAt: new Date().toISOString(),
-};
-
 function option(value: string) {
   return { value, label: value === 'all' ? 'All' : value };
 }
@@ -114,9 +108,7 @@ function buildBreakdown(filters: AnalyticsFilters, totalRevenue: number): Breakd
     .sort((a, b) => b.revenue - a.revenue);
 }
 
-function buildDashboard(filters: AnalyticsFilters): AnalyticsDashboardResponse {
-  requestCount += 1;
-  const stale = requestCount % 5 === 0;
+function buildDashboard(filters: AnalyticsFilters, stale: boolean): AnalyticsDashboardResponse {
   const series = buildSeries(filters, stale);
   const revenue = sum(series, 'revenue');
   const orders = sum(series, 'orders');
@@ -141,6 +133,12 @@ function buildDashboard(filters: AnalyticsFilters): AnalyticsDashboardResponse {
 }
 
 export function createAnalyticsMockRoutes(): MockRoute[] {
+  let requestCount = 0;
+  let revenueTarget: RevenueTarget = {
+    value: 1_250_000,
+    updatedAt: new Date().toISOString(),
+  };
+
   return [
     {
       method: 'GET',
@@ -150,7 +148,10 @@ export function createAnalyticsMockRoutes(): MockRoute[] {
     {
       method: 'GET',
       pattern: '/api/analytics/dashboard',
-      handler: ({ query }) => ({ status: 200, body: buildDashboard(parseFilters(query)) }),
+      handler: ({ query }) => {
+        requestCount += 1;
+        return { status: 200, body: buildDashboard(parseFilters(query), requestCount % 5 === 0) };
+      },
     },
     {
       method: 'GET',
