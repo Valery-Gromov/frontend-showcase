@@ -251,20 +251,6 @@ export function LogViewer() {
               </div>
             ) : null}
 
-            {!isFollowing && logs.length > 0 ? (
-              <div className={styles.jumpButton}>
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    setIsFollowing(true);
-                    void loadPage(false);
-                    virtualizer.scrollToIndex(logs.length - 1, { align: 'end' });
-                  }}
-                >
-                  Jump to now
-                </Button>
-              </div>
-            ) : null}
           </div>
         </div>
 

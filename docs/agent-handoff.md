@@ -61,6 +61,18 @@ pnpm --filter @frontend-showcase/log-viewer build
   and `pnpm hygiene` passed.
 - Commit: `fix(log-viewer): add local stream tests and cleanup`.
 
+### 2026-05-17 — Log Viewer duplicate jump action fix
+
+- Scope profile: app.
+- Changed: removed the floating in-scroll `Jump to now` button; the toolbar action remains the
+  single way to resume live tail.
+- Purpose: avoid a duplicate action whose absolute positioning moved with the virtualized scroll
+  content.
+- Verification: `pnpm --filter @frontend-showcase/log-viewer test`, `pnpm --filter
+  @frontend-showcase/log-viewer typecheck`, `pnpm --filter @frontend-showcase/log-viewer build`,
+  and `pnpm hygiene` passed.
+- Commit: `fix(log-viewer): remove duplicate jump action`.
+
 ### 2026-05-17 — Data Hub local cleanup and tests
 
 - Scope profile: app.
